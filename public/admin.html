@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Staff – Elite Resort Care</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#0B1426'},gold:{DEFAULT:'#C9A962'},cream:'#F7F4EF'},fontFamily:{serif:['Cormorant Garamond','Georgia','serif']}}}}</script>
+  <style>body{font-family:Inter,system-ui,sans-serif}.font-serif{font-family:'Cormorant Garamond',Georgia,serif}</style>
+</head>
+<body class="bg-cream min-h-screen text-navy">
+  <div id="loginView" class="min-h-screen flex flex-col">
+    <header class="bg-navy text-white py-4"><div class="max-w-sm mx-auto px-4 flex items-center gap-3">
+      <a href="/" class="flex items-center gap-3 hover:opacity-90">
+        <div class="w-9 h-9 rounded-full border border-gold/60 flex items-center justify-center text-gold text-sm font-serif font-bold">ER</div>
+        <div class="font-serif text-lg tracking-wide text-gold">Elite Resort Care</div>
+      </a>
+    </div></header>
+    <div class="flex-1 flex items-center justify-center px-4 py-12"><div class="bg-white rounded-2xl shadow-sm border border-navy/5 p-8 w-full max-w-sm">
+      <h1 class="font-serif text-2xl text-navy text-center mb-6">Staff Login</h1>
+      <form id="loginForm" class="space-y-4">
+        <div><label class="block text-xs font-medium uppercase tracking-wider text-navy/50 mb-1.5">Username</label><input type="text" id="username" value="admin" required class="w-full border border-navy/15 rounded-lg px-3.5 py-3 bg-cream/50 outline-none" /></div>
+        <div><label class="block text-xs font-medium uppercase tracking-wider text-navy/50 mb-1.5">Password</label><input type="password" id="password" value="goldcoast2026" required class="w-full border border-navy/15 rounded-lg px-3.5 py-3 bg-cream/50 outline-none" /></div>
+        <div id="loginError" class="hidden text-red-700 text-sm"></div>
+        <button type="submit" class="w-full bg-navy text-gold py-3 rounded-lg font-medium border border-gold/30">Sign in</button>
+      </form>
+      <p class="text-center text-xs text-navy/40 mt-5"><a href="/" class="text-gold hover:underline">← Back to report an incident</a></p>
+    </div></div>
+  </div>
+  <div id="dashView" class="hidden">
+    <header class="bg-navy text-white sticky top-0 z-10"><div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-3 hover:opacity-90">
+        <div class="w-8 h-8 rounded-full border border-gold/60 flex items-center justify-center text-gold text-xs font-serif font-bold">ER</div>
+        <span class="font-serif text-gold tracking-wide">Incident Tracker</span>
+      </a>
+      <div class="flex items-center gap-4 text-sm"><span id="userName" class="text-white/60"></span><button onclick="logout()" class="text-white/70 hover:text-gold">Logout</button></div>
+    </div></header>
+    <main class="max-w-5xl mx-auto px-4 py-6">
+      <div class="flex flex-wrap gap-3 mb-6">
+        <select id="filterDev" class="border border-navy/15 rounded-lg px-3 py-2 text-sm bg-white"><option value="">All properties</option></select>
+        <select id="filterStatus" class="border border-navy/15 rounded-lg px-3 py-2 text-sm bg-white"><option value="">All statuses</option><option value="open">Open</option><option value="closed">Closed</option></select>
+        <button onclick="loadIncidents()" class="bg-navy text-gold px-4 py-2 rounded-lg text-sm border border-gold/30">Refresh</button>
+      </div>
+      <div id="incidentList" class="space-y-3"></div>
+      <p id="emptyMsg" class="hidden text-center text-navy/40 py-16 font-serif text-lg">No incidents found</p>
+    </main>
+  </div>
+  <div id="modal" class="hidden fixed inset-0 bg-navy/50 flex items-center justify-center p-4 z-20">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+      <h2 class="font-serif text-xl text-navy mb-1">Update Incident</h2>
+      <p id="modalRef" class="font-mono text-sm text-navy/50 mb-5"></p>
+      <form id="updateForm" class="space-y-4">
+        <input type="hidden" id="updRef" />
+        <div><label class="block text-xs font-medium uppercase tracking-wider text-navy/50 mb-1.5">Status</label>
+          <select id="updStatus" class="w-full border border-navy/15 rounded-lg px-3 py-2.5 bg-cream/50"><option value="open">Open</option><option value="closed">Closed</option></select></div>
+        <div><label class="block text-xs font-medium uppercase tracking-wider text-navy/50 mb-1.5">Note / Update for customer</label>
+          <textarea id="updNote" rows="3" placeholder="What happened / next steps…" class="w-full border border-navy/15 rounded-lg px-3 py-2.5 bg-cream/50 resize-none"></textarea></div>
+        <div id="updError" class="hidden text-red-700 text-sm"></div>
+        <div class="flex gap-3 pt-1"><button type="button" onclick="closeModal()" class="flex-1 border border-navy/15 py-2.5 rounded-lg">Cancel</button>
+          <button type="submit" class="flex-1 bg-navy text-gold py-2.5 rounded-lg font-medium border border-gold/30">Save Update</button></div>
+      </form>
+    </div>
+  </div>
+  <script>
+    let token=localStorage.getItem('gc_token')||'';let displayName=localStorage.getItem('gc_name')||'';
+    function formatDate(iso){if(!iso)return '—';const d=new Date(iso.includes('T')?iso:iso+'Z');return d.toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}
+    if(token)showDash();
+    document.getElementById('loginForm').addEventListener('submit',async(e)=>{e.preventDefault();const err=document.getElementById('loginError');err.classList.add('hidden');
+      try{const res=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:document.getElementById('username').value,password:document.getElementById('password').value})});const data=await res.json();if(!res.ok)throw new Error(data.error||'Login failed');token=data.token;displayName=data.display_name;localStorage.setItem('gc_token',token);localStorage.setItem('gc_name',displayName);showDash();}catch(ex){err.textContent=ex.message;err.classList.remove('hidden');}});
+    function logout(){token='';localStorage.removeItem('gc_token');localStorage.removeItem('gc_name');document.getElementById('loginView').classList.remove('hidden');document.getElementById('dashView').classList.add('hidden');}
+    function showDash(){document.getElementById('loginView').classList.add('hidden');document.getElementById('dashView').classList.remove('hidden');document.getElementById('userName').textContent=displayName;loadIncidents();}
+    async function loadIncidents(){const list=document.getElementById('incidentList');const empty=document.getElementById('emptyMsg');list.innerHTML='<p class="text-navy/40 text-center py-10">Loading…</p>';
+      const params=new URLSearchParams();const dev=document.getElementById('filterDev').value;const status=document.getElementById('filterStatus').value;if(dev)params.set('development_id',dev);if(status)params.set('status',status);
+      try{const res=await fetch('/api/admin/incidents?'+params,{headers:{Authorization:'Bearer '+token}});if(res.status===401){logout();return;}const data=await res.json();if(!res.ok)throw new Error(data.error);
+        const sel=document.getElementById('filterDev');if(sel.options.length<=1&&data.developments){data.developments.forEach(d=>{const o=document.createElement('option');o.value=d.id;o.textContent=d.name;sel.appendChild(o);});}
+        list.innerHTML='';if(!data.incidents.length){empty.classList.remove('hidden');return;}empty.classList.add('hidden');
+        data.incidents.forEach(i=>{const open=i.status==='open';const card=document.createElement('div');card.className='bg-white rounded-xl border border-navy/5 p-4 hover:shadow-sm transition';
+          const note=i.latest_note?'<p class="text-sm text-navy/70 mt-2 bg-cream/80 rounded-lg px-3 py-2 border border-navy/5"><span class="text-[10px] uppercase tracking-wider text-navy/40 block mb-0.5">Latest update</span>'+i.latest_note+'</p>':'';
+          card.innerHTML='<div class="flex items-start justify-between gap-3"><div><p class="ref font-mono font-semibold text-navy"></p><p class="loc text-sm text-navy/50"></p></div><span class="status-badge px-2.5 py-0.5 rounded-full text-xs font-medium '+(open?'bg-emerald-100 text-emerald-800':'bg-red-100 text-red-800')+'">'+(open?'Open':'Closed')+'</span></div><p class="desc text-sm text-navy/80 mt-2 line-clamp-2"></p>'+note+'<div class="flex items-center justify-between mt-3 text-xs text-navy/40"><span class="meta"></span><button class="upd-btn text-gold hover:underline font-medium">Update</button></div>';
+          card.querySelector('.ref').textContent=i.reference;card.querySelector('.loc').textContent=i.development_name+(i.unit?' · '+i.unit:'');card.querySelector('.desc').textContent=i.description;card.querySelector('.meta').textContent=formatDate(i.created_at);card.querySelector('.upd-btn').addEventListener('click',()=>openModal(i));list.appendChild(card);});
+      }catch(err){list.innerHTML='<p class="text-red-600 text-center py-10">'+err.message+'</p>';}}
+    function openModal(i){document.getElementById('updRef').value=i.reference;document.getElementById('modalRef').textContent=i.reference+' · '+i.development_name;document.getElementById('updStatus').value=i.status==='closed'?'closed':'open';document.getElementById('updNote').value='';document.getElementById('updError').classList.add('hidden');document.getElementById('modal').classList.remove('hidden');}
+    function closeModal(){document.getElementById('modal').classList.add('hidden');}
+    document.getElementById('updateForm').addEventListener('submit',async(e)=>{e.preventDefault();const errEl=document.getElementById('updError');errEl.classList.add('hidden');
+      try{const res=await fetch('/api/admin/update',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({reference:document.getElementById('updRef').value,status:document.getElementById('updStatus').value,note:document.getElementById('updNote').value.trim()})});const data=await res.json();if(!res.ok)throw new Error(data.error||'Update failed');closeModal();loadIncidents();}catch(ex){errEl.textContent=ex.message;errEl.classList.remove('hidden');}});
+    document.getElementById('modal').addEventListener('click',(e)=>{if(e.target.id==='modal')closeModal();});
+  </script>
+</body>
+</html>

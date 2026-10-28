@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to log an incident – Elite Resort Care</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#0B1426'},gold:{DEFAULT:'#C9A962'},cream:'#F7F4EF'},fontFamily:{serif:['Cormorant Garamond','Georgia','serif']}}}}</script>
+  <style>body{font-family:Inter,system-ui,sans-serif}.font-serif{font-family:'Cormorant Garamond',Georgia,serif}</style>
+</head>
+<body class="bg-cream min-h-screen text-navy">
+  <header class="bg-navy text-white">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full border border-gold/60 flex items-center justify-center text-gold text-sm font-serif font-bold">ER</div>
+        <div>
+          <div class="font-serif text-lg tracking-wide text-gold leading-tight">Elite Resort Care</div>
+          <div class="text-[10px] uppercase tracking-[0.2em] text-white/50">Incident Portal</div>
+        </div>
+      </a>
+      <nav class="flex gap-4 text-sm">
+        <a href="/" class="text-white/70 hover:text-gold">Report</a>
+        <a href="/track.html" class="text-white/70 hover:text-gold">Track</a>
+        <a href="/admin.html" class="text-white/70 hover:text-gold">Staff</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-xl mx-auto px-4 py-10">
+    <div class="text-center mb-8">
+      <h1 class="font-serif text-3xl text-navy font-semibold">How to log an incident</h1>
+      <p class="text-navy/60 mt-2 text-sm">Simple guide for residents and property owners</p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-navy/5 p-6 md:p-8 space-y-6 text-sm leading-relaxed">
+      <p class="text-navy/80">You can report a maintenance issue online at any time. You will receive a unique reference number so you can follow progress until the job is closed. Photos of the problem are welcome and help our team respond faster.</p>
+
+      <div>
+        <h2 class="font-serif text-xl text-navy mb-3">Step by step</h2>
+        <ol class="space-y-4 list-decimal list-inside text-navy/80">
+          <li><span class="font-medium text-navy">Open the portal</span> — go to the Report page and start a new request.</li>
+          <li><span class="font-medium text-navy">Select your property</span> — choose <strong>Koala Cove</strong>, <strong>Muir Hill</strong>, or <strong>Surfers Riverside</strong>.</li>
+          <li><span class="font-medium text-navy">Add unit details</span> — enter your unit, apartment, or lot number if applicable.</li>
+          <li><span class="font-medium text-navy">Your name and contact</span> — use a <strong>10-digit phone number</strong> or a <strong>valid email</strong>.</li>
+          <li><span class="font-medium text-navy">Describe the issue</span> — say what is wrong, where it is, and if it is urgent.</li>
+          <li><span class="font-medium text-navy">Add photos (optional)</span> — up to 5 photos. Tap the × on a photo if you selected the wrong one.</li>
+          <li><span class="font-medium text-navy">Submit</span> — press Submit Incident. Copy and keep your <strong>reference number</strong>.</li>
+        </ol>
+      </div>
+
+      <div>
+        <h2 class="font-serif text-xl text-navy mb-3">Track your request</h2>
+        <ol class="space-y-2 list-decimal list-inside text-navy/80">
+          <li>Open <strong>Track</strong> and enter your reference number.</li>
+          <li>You will see status (<strong>Open</strong> or <strong>Closed</strong>), staff notes, and any photos.</li>
+          <li>Tap a photo to view a larger version.</li>
+        </ol>
+      </div>
+
+      <div>
+        <h2 class="font-serif text-xl text-navy mb-3">Tips</h2>
+        <ul class="space-y-2 list-disc list-inside text-navy/80">
+          <li>One request per issue so each job can be tracked clearly.</li>
+          <li>For urgent matters (water, power, safety), say so in the description.</li>
+          <li>Keep your reference number until the job shows as Closed.</li>
+        </ul>
+      </div>
+
+      <div class="pt-2 flex flex-col sm:flex-row gap-3">
+        <a href="/" class="inline-block text-center bg-navy text-gold px-6 py-3 rounded-lg font-medium border border-gold/30">Log an incident</a>
+        <a href="/track.html" class="inline-block text-center border border-navy/15 px-6 py-3 rounded-lg text-navy hover:bg-cream">Track an existing request</a>
+      </div>
+    </div>
+
+    <p class="text-center text-xs text-navy/40 mt-8">Elite Resort Care · Gold Coast · Eliteresortcare@gmail.com</p>
+  </main>
+</body>
+</html>

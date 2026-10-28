@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Report an Incident – Elite Resort Care</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#0B1426',light:'#152238'},gold:{DEFAULT:'#C9A962'},cream:'#F7F4EF'},fontFamily:{serif:['Cormorant Garamond','Georgia','serif'],sans:['Inter','system-ui','sans-serif']}}}}</script>
+  <style>body{font-family:Inter,system-ui,sans-serif}.font-serif{font-family:'Cormorant Garamond',Georgia,serif}</style>
+</head>
+<body class="bg-cream min-h-screen text-navy">
+  <header class="bg-navy text-white"><div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-3"><div class="w-9 h-9 rounded-full border border-gold/60 flex items-center justify-center text-gold text-sm font-serif font-bold">ER</div>
+    <div><div class="font-serif text-lg tracking-wide text-gold leading-tight">Elite Resort Care</div><div class="text-[10px] uppercase tracking-[0.2em] text-white/50">Incident Portal</div></div></a>
+    <nav class="flex gap-5 text-sm"><a href="/" class="text-gold border-b border-gold pb-0.5">Report</a><a href="/track.html" class="text-white/70 hover:text-gold">Track</a><a href="/admin.html" class="text-white/70 hover:text-gold">Staff</a></nav>
+  </div></header>
+  <main class="max-w-xl mx-auto px-4 py-10">
+    <div class="text-center mb-8">
+      <h1 class="font-serif text-3xl md:text-4xl text-navy font-semibold">Report an Incident</h1>
+      <p class="text-navy/60 mt-2 text-sm">Luxury property maintenance · Gold Coast</p>
+      <a href="/howto.html" class="inline-block mt-4 px-5 py-2.5 rounded-lg border border-navy/15 bg-white text-navy text-sm font-medium hover:border-gold hover:text-gold transition shadow-sm">How to log an incident</a>
+    </div>
+    <div id="success" class="hidden bg-white rounded-2xl shadow-sm border border-gold/20 p-8 text-center">
+      <div class="w-14 h-14 mx-auto rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 text-2xl mb-4">✓</div>
+      <h2 class="font-serif text-2xl text-navy">Incident Logged</h2>
+      <p class="text-navy/60 mt-2 text-sm">Your reference number is</p>
+      <div class="flex items-center justify-center gap-2 my-4 flex-wrap">
+        <p id="refDisplay" class="font-mono text-2xl font-semibold text-gold tracking-wider"></p>
+        <button type="button" onclick="copyReference()" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-navy/15 text-navy/70 text-sm hover:bg-cream"><span id="copyRefLabel">Copy</span></button>
+      </div>
+      <p class="text-sm text-navy/50 mb-6">Please keep this number to track progress.</p>
+      <a id="trackLink" href="#" class="inline-block bg-navy text-gold px-8 py-3 rounded border border-gold/40 font-medium">Track Progress</a>
+      <button onclick="location.reload()" class="block mx-auto mt-5 text-sm text-navy/50">Report another incident</button>
+    </div>
+    <form id="reportForm" class="bg-white rounded-2xl shadow-sm border border-navy/5 p-6 md:p-8 space-y-5">
+      <div><label class="block text-xs font-medium uppercase tracking-wider text-navy/50 mb-1.5">Property *</label>
+        <select id="development_id" required class="w-full border border-navy/15 rounded-lg px-3.5 py-3 bg-cream/50 outline-none"><option value="">Select property…</option></select></div>
+      <div><label class="block text-xs font-medium uppercase tracking-wider text-navy/50 mb-1.5">Unit / Apartment / Lot</label>
+        <input type="text" id="unit" placeholder="e.g. Unit 12B" class="w-full border border-navy/15 rounded-lg px-3.5 py-3 bg-cream/50 outline-none" /></div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div><label class="block text-xs font-medium uppercase tracking-wider text-navy/50 mb-1.5">Your Name *</label>
+          <input type="text" id="reporter_name" required class="w-full border border-navy/15 rounded-lg px-3.5 py-3 bg-cream/50 outline-none" /></div>
+        <div><label class="block text-xs font-medium uppercase tracking-wider text-navy/50 mb-1.5">Phone or Email *</label>
+          <input type="text" id="reporter_contact" required placeholder="0400123456 or email" class="w-full border border-navy/15 rounded-lg px-3.5 py-3 bg-cream/50 outline-none" />
+          <p class="text-xs text-navy/40 mt-1">10-digit mobile/phone or a valid email</p></div>
+      </div>
+      <div><label class="block text-xs font-medium uppercase tracking-wider text-navy/50 mb-1.5">Describe the issue *</label>
+        <textarea id="description" required rows="4" class="w-full border border-navy/15 rounded-lg px-3.5 py-3 bg-cream/50 outline-none resize-none"></textarea></div>
+      <div>
+        <label class="block text-xs font-medium uppercase tracking-wider text-navy/50 mb-1.5">Photos (optional, up to 5)</label>
+        <input type="file" id="photos" accept="image/*" multiple class="w-full text-sm text-navy/70 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-navy file:text-gold file:text-sm" />
+        <p class="text-xs text-navy/40 mt-1">JPG or PNG, max ~1.5MB each. Tap × to remove a photo.</p>
+        <div id="photoPreview" class="flex flex-wrap gap-2 mt-3"></div>
+      </div>
+      <div id="error" class="hidden text-red-700 text-sm bg-red-50 border border-red-100 rounded-lg px-3 py-2.5"></div>
+      <button type="submit" id="submitBtn" class="w-full bg-navy text-gold font-medium py-3.5 rounded-lg border border-gold/30 disabled:opacity-50">Submit Incident</button>
+    </form>
+    <p class="text-center text-sm text-navy/40 mt-8">Already have a reference? <a href="/track.html" class="text-gold hover:underline">Track an existing incident</a></p>
+  </main>
+  <footer class="border-t border-navy/5 mt-12 py-6 text-center text-xs text-navy/40">© Elite Resort Care · Gold Coast</footer>
+  <script>
+    let selectedPhotos = [];
+
+    function isValidEmail(s) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+    }
+    function isValidPhone(s) {
+      const digits = s.replace(/\D/g, '');
+      return digits.length === 10;
+    }
+    function isValidContact(s) {
+      const t = (s || '').trim();
+      if (!t) return false;
+      if (t.includes('@')) return isValidEmail(t);
+      return isValidPhone(t);
+    }
+
+    function renderPhotoPreview() {
+      const box = document.getElementById('photoPreview');
+      box.innerHTML = '';
+      selectedPhotos.forEach((file, index) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'relative w-16 h-16';
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.className = 'w-16 h-16 object-cover rounded-lg border border-navy/10';
+        img.alt = 'Photo ' + (index + 1);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.setAttribute('aria-label', 'Remove photo');
+        btn.className = 'absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-navy text-white text-xs leading-none flex items-center justify-center shadow hover:bg-red-700';
+        btn.innerHTML = '&times;';
+        btn.addEventListener('click', () => {
+          selectedPhotos.splice(index, 1);
+          renderPhotoPreview();
+          document.getElementById('photos').value = '';
+        });
+        wrap.appendChild(img);
+        wrap.appendChild(btn);
+        box.appendChild(wrap);
+      });
+    }
+
+    async function loadDevelopments(){
+      try{
+        const res=await fetch('/api/developments');
+        const data=await res.json();
+        const list=data.developments||[];
+        const select=document.getElementById('development_id');
+        list.forEach(d=>{
+          const opt=document.createElement('option');
+          opt.value=d.id;opt.textContent=d.name;select.appendChild(opt);
+        });
+      }catch(e){
+        const select=document.getElementById('development_id');
+        ['Koala Cove','Muir Hill','Surfers Riverside'].forEach((name,i)=>{
+          const opt=document.createElement('option');
+          opt.value=i+1;opt.textContent=name;select.appendChild(opt);
+        });
+      }
+    }
+    loadDevelopments();
+
+    document.getElementById('photos').addEventListener('change', (e) => {
+      const incoming = [...e.target.files];
+      for (const f of incoming) {
+        if (selectedPhotos.length >= 5) break;
+        if (!f.type.startsWith('image/')) continue;
+        selectedPhotos.push(f);
+      }
+      renderPhotoPreview();
+      e.target.value = '';
+    });
+
+    function copyReference(){
+      const ref=document.getElementById('refDisplay').textContent.trim();
+      const label=document.getElementById('copyRefLabel');
+      const done=()=>{label.textContent='Copied!';setTimeout(()=>label.textContent='Copy',1500);};
+      if(navigator.clipboard)navigator.clipboard.writeText(ref).then(done);else done();
+    }
+
+    document.getElementById('reportForm').addEventListener('submit',async(e)=>{
+      e.preventDefault();
+      const btn=document.getElementById('submitBtn');
+      const errEl=document.getElementById('error');
+      errEl.classList.add('hidden');
+      const contact=document.getElementById('reporter_contact').value.trim();
+      if(!isValidContact(contact)){
+        errEl.textContent='Please enter a 10-digit phone number (e.g. 0400123456) or a valid email address.';
+        errEl.classList.remove('hidden');
+        document.getElementById('reporter_contact').focus();
+        return;
+      }
+      btn.disabled=true;btn.textContent='Submitting…';
+      const form=new FormData();
+      form.append('development_id',document.getElementById('development_id').value);
+      form.append('unit',document.getElementById('unit').value.trim());
+      form.append('reporter_name',document.getElementById('reporter_name').value.trim());
+      form.append('reporter_contact',contact);
+      form.append('description',document.getElementById('description').value.trim());
+      selectedPhotos.slice(0, 5).forEach(f => form.append('photos', f));
+      try{
+        const res=await fetch('/api/report',{method:'POST',body:form});
+        const data=await res.json();
+        if(!res.ok)throw new Error(data.error||'Something went wrong');
+        document.getElementById('reportForm').classList.add('hidden');
+        document.getElementById('success').classList.remove('hidden');
+        document.getElementById('refDisplay').textContent=data.reference;
+        document.getElementById('trackLink').href=data.track_url;
+      }catch(err){
+        errEl.textContent=err.message;
+        errEl.classList.remove('hidden');
+        btn.disabled=false;btn.textContent='Submit Incident';
+      }
+    });
+  </script>
+</body>
+</html>
