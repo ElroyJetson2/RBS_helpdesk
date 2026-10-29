@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Report an Incident – Elite Resort Care</title>
+  <title>Report an Incident – RBS Helpdesk</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <script>tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#0B1426',light:'#152238'},gold:{DEFAULT:'#C9A962'},cream:'#F7F4EF'},fontFamily:{serif:['Cormorant Garamond','Georgia','serif'],sans:['Inter','system-ui','sans-serif']}}}}</script>
@@ -11,14 +11,14 @@
 </head>
 <body class="bg-cream min-h-screen text-navy">
   <header class="bg-navy text-white"><div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-    <a href="/" class="flex items-center gap-3"><div class="w-9 h-9 rounded-full border border-gold/60 flex items-center justify-center text-gold text-sm font-serif font-bold">ER</div>
-    <div><div class="font-serif text-lg tracking-wide text-gold leading-tight">Elite Resort Care</div><div class="text-[10px] uppercase tracking-[0.2em] text-white/50">Incident Portal</div></div></a>
+    <a href="/" class="flex items-center gap-3"><div class="w-9 h-9 rounded-full border border-gold/60 flex items-center justify-center text-gold text-sm font-serif font-bold">RBS</div>
+    <div><div class="font-serif text-lg tracking-wide text-gold leading-tight">RBS Helpdesk</div><div class="text-[10px] uppercase tracking-[0.2em] text-white/50">Incident Portal</div></div></a>
     <nav class="flex gap-5 text-sm"><a href="/" class="text-gold border-b border-gold pb-0.5">Report</a><a href="/track.html" class="text-white/70 hover:text-gold">Track</a><a href="/admin.html" class="text-white/70 hover:text-gold">Staff</a></nav>
   </div></header>
   <main class="max-w-xl mx-auto px-4 py-10">
     <div class="text-center mb-8">
       <h1 class="font-serif text-3xl md:text-4xl text-navy font-semibold">Report an Incident</h1>
-      <p class="text-navy/60 mt-2 text-sm">Luxury property maintenance · Gold Coast</p>
+      <p class="text-navy/60 mt-2 text-sm">Require Building Solutions · Property maintenance</p>
       <a href="/howto.html" class="inline-block mt-4 px-5 py-2.5 rounded-lg border border-navy/15 bg-white text-navy text-sm font-medium hover:border-gold hover:text-gold transition shadow-sm">How to log an incident</a>
     </div>
     <div id="success" class="hidden bg-white rounded-2xl shadow-sm border border-gold/20 p-8 text-center">
@@ -58,7 +58,7 @@
     </form>
     <p class="text-center text-sm text-navy/40 mt-8">Already have a reference? <a href="/track.html" class="text-gold hover:underline">Track an existing incident</a></p>
   </main>
-  <footer class="border-t border-navy/5 mt-12 py-6 text-center text-xs text-navy/40">© Elite Resort Care · Gold Coast</footer>
+  <footer class="border-t border-navy/5 mt-12 py-6 text-center text-xs text-navy/40">© RBS Helpdesk · Require Building Solutions</footer>
   <script>
     let selectedPhotos = [];
 
@@ -113,11 +113,7 @@
           opt.value=d.id;opt.textContent=d.name;select.appendChild(opt);
         });
       }catch(e){
-        const select=document.getElementById('development_id');
-        ['Koala Cove','Muir Hill','Surfers Riverside'].forEach((name,i)=>{
-          const opt=document.createElement('option');
-          opt.value=i+1;opt.textContent=name;select.appendChild(opt);
-        });
+        console.error('Failed to load properties', e);
       }
     }
     loadDevelopments();
