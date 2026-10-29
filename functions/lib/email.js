@@ -1,9 +1,9 @@
 /**
  * Send email via Resend API (set RESEND_API_KEY in Pages env vars).
- * Staff inbox: STAFF_EMAIL or default eliteresortcare@gmail.com
+ * Staff inbox: STAFF_EMAIL or default helpdesk@requirebuilding.com.au
  */
-const STAFF_EMAIL = 'eliteresortcare@gmail.com';
-const SITE = 'https://gc-jobs.pages.dev';
+const STAFF_EMAIL = 'helpdesk@requirebuilding.com.au';
+const SITE = 'https://rbs-helpdesk.pages.dev';
 
 export function staffEmail(env) {
   return (env.STAFF_EMAIL || STAFF_EMAIL).trim().toLowerCase();
@@ -19,7 +19,7 @@ export async function sendEmail(env, { to, subject, text, html }) {
     console.log('[email skipped – no RESEND_API_KEY]', { to, subject });
     return { ok: false, skipped: true, reason: 'RESEND_API_KEY not set' };
   }
-  const from = env.EMAIL_FROM || 'Elite Resort Care <onboarding@resend.dev>';
+  const from = env.EMAIL_FROM || 'RBS Helpdesk <onboarding@resend.dev>';
   const recipients = (Array.isArray(to) ? to : [to]).map((a) => String(a).trim().toLowerCase());
   try {
     const res = await fetch('https://api.resend.com/emails', {
@@ -50,9 +50,9 @@ export async function sendEmail(env, { to, subject, text, html }) {
 
 function escapeHtml(s) {
   return String(s)
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>');
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 function jobUrl(reference) {
@@ -66,10 +66,10 @@ function buttonHtml(href, label) {
 function emailShell(inner) {
   return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#F7F4EF;font-family:system-ui,-apple-system,sans-serif;color:#0B1426;">
   <div style="max-width:560px;margin:24px auto;background:#ffffff;border-radius:12px;padding:28px 24px;border:1px solid #e8e4dc;">
-    <p style="margin:0 0 4px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#C9A962;">Elite Resort Care</p>
+    <p style="margin:0 0 4px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#C9A962;">RBS Helpdesk</p>
     ${inner}
   </div>
-  <p style="text-align:center;font-size:11px;color:#888;margin:16px;">Gold Coast property maintenance</p>
+  <p style="text-align:center;font-size:11px;color:#888;margin:16px;">Require Building Solutions</p>
 </body></html>`;
 }
 
@@ -155,7 +155,7 @@ export async function notifyStatusChange(env, incident, note) {
       'Track progress anytime:',
       track,
       '',
-      '— Elite Resort Care'
+      '— RBS Helpdesk'
     ].join('\n');
     const custHtml = emailShell(`
       <h1 style="margin:8px 0 16px;font-size:22px;font-weight:600;">Update on your request</h1>

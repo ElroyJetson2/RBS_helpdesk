@@ -1,14 +1,18 @@
--- Elite Resort Care – Incident Tracking
+-- RBS Helpdesk – Incident Tracking
 -- Statuses: open | closed only
--- Properties: Koala Cove, Muir Hill, Surfers Riverside
+-- Properties managed via admin panel with Google Places verification
 
 PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS developments (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL UNIQUE,
-  code TEXT NOT NULL UNIQUE,
+  code TEXT UNIQUE,
   address TEXT,
+  place_id TEXT,
+  formatted_address TEXT,
+  lat REAL,
+  lng REAL,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -58,10 +62,8 @@ CREATE INDEX IF NOT EXISTS idx_incidents_created ON incidents(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_updates_incident ON updates(incident_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_photos_incident ON photos(incident_id);
 
-INSERT OR IGNORE INTO developments (name, code, address) VALUES
-  ('Koala Cove', 'KC', 'Gold Coast QLD'),
-  ('Muir Hill', 'MH', 'Gold Coast QLD'),
-  ('Surfers Riverside', 'SR', 'Gold Coast QLD');
+-- Start with empty property list – staff will add verified addresses via admin
+-- (Old Elite properties intentionally not seeded)
 
 INSERT OR IGNORE INTO staff (username, password_hash, display_name) VALUES
-  ('admin', 'goldcoast2026', 'Elite Resort Care');
+  ('admin', 'RBS@rbs1', 'RBS Helpdesk');
