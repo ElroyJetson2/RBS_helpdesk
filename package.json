@@ -1,15 +1,14 @@
 {
-  "name": "goldcoast-incidents",
+  "name": "rbs-helpdesk",
   "version": "1.0.0",
-  "description": "Simple incident reporting & tracking for Gold Coast property maintenance",
+  "description": "RBS Helpdesk – incident reporting & tracking for Require Building Solutions",
   "private": true,
   "scripts": {
-    "dev": "wrangler pages dev public --d1=DB=goldcoast-incidents-db --local",
+    "dev": "wrangler pages dev public --d1=DB=rbs-help-db --local",
     "deploy": "wrangler pages deploy public",
-    "db:create": "wrangler d1 create goldcoast-incidents-db",
-    "db:init": "wrangler d1 execute goldcoast-incidents-db --remote --file=./schema.sql",
-    "db:init:local": "wrangler d1 execute goldcoast-incidents-db --local --file=./schema.sql",
-    "db:query": "wrangler d1 execute goldcoast-incidents-db --remote --command"
+    "db:init": "wrangler d1 execute rbs-help-db --remote --file=./schema.sql",
+    "db:init:local": "wrangler d1 execute rbs-help-db --local --file=./schema.sql",
+    "db:query": "wrangler d1 execute rbs-help-db --remote --command"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

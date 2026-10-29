@@ -1,150 +1,96 @@
-# Gold Coast Incident Tracker
+# RBS Helpdesk
 
-Simple, mobile-friendly incident reporting & job tracking system for property maintenance companies.
+Simple, mobile-friendly incident reporting & job tracking system for **Require Building Solutions**.
 
-Customers log an issue → receive a reference number → watch live progress and projected finish time.  
-Staff update jobs in a clean admin panel. Reports can be filtered per development.
+Customers log an issue → receive a reference number → track progress.  
+Staff update jobs and manage verified properties in the admin panel.
 
 **Stack:** Cloudflare Pages + Pages Functions + D1 (SQLite)  
-**Cost:** Free tier is more than enough for most property portfolios.
+**Brand:** RBS Helpdesk  
+**Staff email:** helpdesk@requirebuilding.com.au
 
 ---
-
 
 ## Features
 
-- **Customer form** – one page, select development, describe issue, get reference instantly
-- **Public tracking page** – enter reference → status, timeline, projected finish
-- **Staff admin** – login, filter by development/status, update status + notes + projected finish
-- **Per-development reporting** – filter any view by development
-- **Seeded Gold Coast developments** – easy to edit
+- **Customer form** – select property, describe issue, attach photos (up to 5), get reference instantly
+- **Public tracking page** – enter reference → status + timeline
+- **Staff admin** – login, filter incidents, update status + notes
+- **Manage Properties** – add/edit properties with **Google Places** address verification (Australian addresses only)
+- **Email notifications** via Resend on new job / status change
+- Statuses: Open / Closed only
 
 ---
 
-## Quick Start (Deploy in ~10 minutes)
+## Quick Start
 
 ### 1. Prerequisites
-- Cloudflare account (free)
-- Node.js 18+
-- GitHub account (optional but recommended)
+- Cloudflare account
+- This repo connected to Cloudflare Pages project `rbs-helpdesk`
+- D1 database `rbs-help-db` already created and bound as `DB`
 
-### 2. Clone / copy this repo
+### 2. Initialise the database
 ```bash
-cd goldcoast-incidents
-npm install
+npx wrangler d1 execute rbs-help-db --remote --file=./schema.sql
 ```
 
-### 3. Create the D1 database
-```bash
-npx wrangler login
-npx wrangler d1 create goldcoast-incidents-db
-```
-Copy the `database_id` that is printed and paste it into `wrangler.toml` (replace `REPLACE_WITH_YOUR_D1_DATABASE_ID`).
+### 3. Environment variables (Cloudflare Pages → Settings → Environment variables)
+- `RESEND_API_KEY` – for email notifications
+- `STAFF_EMAIL` – optional override (default: helpdesk@requirebuilding.com.au)
+- `EMAIL_FROM` – optional (default: RBS Helpdesk <onboarding@resend.dev>)
 
-### 4. Initialise the schema + seed data
-```bash
-# Remote (production)
-npx wrangler d1 execute goldcoast-incidents-db --remote --file=./schema.sql
+### 4. Google Places API key
+The admin property form uses Google Places Autocomplete.  
+The key is currently in `public/admin.html`. **Restrict it** in Google Cloud Console:
+- Application restriction → Websites
+- Allow: `https://rbs-helpdesk.pages.dev/*` and your final domain
+- API restriction → Places API + Maps JavaScript API
 
-# Or local for testing
-npx wrangler d1 execute goldcoast-incidents-db --local --file=./schema.sql
-```
+### 5. Default staff login
+- Username: `admin`
+- Password: `RBS@rbs1`
 
-### 5. Local development
-```bash
-npx wrangler pages dev public --d1=DB=goldcoast-incidents-db --local
-```
-Open http://localhost:8788
-
-- Customer form: http://localhost:8788/
-- Track: http://localhost:8788/track.html
-- Admin: http://localhost:8788/admin.html  
-  Default login: **admin** / **goldcoast2026**
-
-### 6. Deploy to Cloudflare Pages
-
-**Option A – via Wrangler**
-```bash
-npx wrangler pages project create goldcoast-incidents
-npx wrangler pages deploy public --project-name=goldcoast-incidents
-```
-
-**Option B – GitHub (recommended)**
-1. Push this folder to a GitHub repository
-2. In Cloudflare Dashboard → Pages → Create project → Connect to Git
-3. Select the repo
-4. Build settings:
-   - Framework preset: None
-   - Build command: (leave empty)
-   - Build output directory: `public`
-5. After first deploy, go to Settings → Functions → D1 database bindings
-   - Variable name: `DB`
-   - D1 database: select `goldcoast-incidents-db`
-6. Redeploy
+Change the password later by updating the `staff` table in D1.
 
 ---
 
-## Customising
+## Adding properties
 
-### Add / edit developments
-Edit `schema.sql` or run SQL against D1:
-```sql
-INSERT INTO developments (name, code, address)
-VALUES ('Your New Complex', 'YNC', '123 Example St, Gold Coast QLD');
-```
-
-### Change default staff password
-```sql
-UPDATE staff SET password_hash = 'your-new-password' WHERE username = 'admin';
-```
-(Or add more staff rows.)
-
-### Production hardening suggestions
-- Replace the demo password auth with **Cloudflare Access** (zero-trust)
-- Add Cloudflare Turnstile to the public report form
-- Hash passwords properly (bcrypt/Web Crypto) instead of plain text
-- Add photo uploads via R2
-- Add email/SMS notifications on status change (Workers + Resend / Twilio)
-
----
-
-## API Overview
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/developments` | Public | List developments for form |
-| POST | `/api/report` | Public | Create incident → returns reference |
-| GET | `/api/track?ref=GC-…` | Public | Get incident + timeline |
-| POST | `/api/admin/login` | Public | Staff login → token |
-| GET | `/api/admin/incidents` | Bearer | List / filter incidents |
-| POST | `/api/admin/update` | Bearer | Update status, note, projected finish |
+1. Log in to Staff → **Properties**
+2. Click **+ Add Property**
+3. Type the property name
+4. Start typing the address – select a suggestion from Google
+5. Only addresses selected from Google (with a `place_id`) can be saved
 
 ---
 
 ## File Structure
 ```
-goldcoast-incidents/
+RBS_helpdesk/
 ├── public/
 │   ├── index.html      # Customer report form
-│   ├── track.html      # Public tracking page
-│   └── admin.html      # Staff dashboard
+│   ├── track.html      # Public tracking
+│   ├── admin.html      # Staff dashboard + Manage Properties
+│   └── howto.html
 ├── functions/
-│   ├── _middleware.js  # CORS
-│   └── api/
-│       ├── developments.js
-│       ├── report.js
-│       ├── track.js
-│       └── admin/
-│           ├── login.js
-│           ├── incidents.js
-│           └── update.js
+│   ├── _middleware.js
+│   ├── api/
+│   │   ├── developments.js
+│   │   ├── report.js
+│   │   ├── track.js
+│   │   ├── admin/
+│   │   │   ├── login.js
+│   │   │   ├── incidents.js
+│   │   │   ├── update.js
+│   │   │   └── properties.js   # NEW – CRUD for properties
+│   │   └── cron/
+│   └── lib/email.js
 ├── schema.sql
 ├── wrangler.toml
-├── package.json
-└── README.md
+└── package.json
 ```
 
 ---
 
 ## Licence
-MIT – free to use and modify for your business.
+Internal use – Require Building Solutions
