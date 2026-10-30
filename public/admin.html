@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – RBS Helpdesk</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#0B1C2C',light:'#143049'},accent:{DEFAULT:'#1C9AD6'},cream:'#F3F6F9'},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
+  <style>
+    body{font-family:Inter,system-ui,sans-serif}
+    .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .kpi{transition:transform .15s ease}
+    .kpi:hover{transform:translateY(-1px)}
+    #detailPanel{transition:transform .25s ease}
+    .status-open{background:#d1fae5;color:#065f46}
+    .status-closed{background:#fee2e2;color:#991b1b}
+  </style>
+</head>
+<body class="bg-cream min-h-screen text-navy">
+
+  <!-- LOGIN -->
+  <div id="loginView" class="min-h-screen flex flex-col">
+    <header class="bg-navy text-white py-4">
+      <div class="max-w-sm mx-auto px-4 flex items-center gap-3">
+        <a href="/" class="flex items-center gap-3 min-w-0 hover:opacity-90">
+          <img src="https://static.wixstatic.com/media/01636e_59a9c7e5033445a6a91de7079e496a0e~mv2.png/v1/fill/w_388,h_86,al_c,q_85,usm_0.66_1.00_0.01,enc_png/RBS%20Logo%20White%20Horizontal.png" alt="Require Building Solutions" class="h-9 sm:h-10 w-auto max-w-[160px] object-contain" />
+          <span class="text-white font-semibold tracking-[0.28em] text-xs sm:text-sm border-l border-white/30 pl-3 whitespace-nowrap">HELPDESK</span>
+        </a>
+      </div>
+    </header>
+    <div class="flex-1 flex items-center justify-center px-4 py-12">
+      <div class="bg-white rounded-2xl shadow-sm border border-navy/5 p-8 w-full max-w-sm">
+        <h1 class="text-2xl text-navy text-center mb-6 font-semibold">Staff Login</h1>
+        <form id="loginForm" class="space-y-4">
+          <div>
+            <label class="block text-xs font-medium uppercase tracking-wider text-navy/50 mb-1.5">Username</label>
+            <input type="text" id="username" value="admin" required class="w-full border border-navy/15 rounded-lg px-3.5 py-3 bg-cream/50 outline-none focus:border-accent" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium uppercase tracking-wider text-navy/50 mb-1.5">Password</label>
+            <input type="password" id="password" required class="w-full border border-navy/15 rounded-lg px-3.5 py-3 bg-cream/50 outline-none focus:border-accent" />
+          </div>
+          <div id="loginError" class="hidden text-red-700 text-sm"></div>
+          <button type="submit" class="w-full bg-accent text-white py-3 rounded-lg font-medium hover:bg-accent/90">Sign in</button>
+        </form>
+        <p class="text-center text-xs text-navy/40 mt-5"><a href="/" class="text-accent hover:underline">← Back to report an incident</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD SHELL -->
+  <div id="dashView" class="hidden">
+    <header class="bg-navy text-white sticky top-0 z-20 shadow">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <a href="/" class="flex items-center gap-3 min-w-0 hover:opacity-90">
+          <img src="https://static.wixstatic.com/media/01636e_59a9c7e5033445a6a91de7079e496a0e~mv2.png/v1/fill/w_388,h_86,al_c,q_85,usm_0.66_1.00_0.01,enc_png/RBS%20Logo%20White%20Horizontal.png" alt="Require Building Solutions" class="h-8 sm:h-9 w-auto max-w-[140px] object-contain" />
+          <span class="text-white font-semibold tracking-[0.28em] text-xs sm:text-sm border-l border-white/30 pl-3 whitespace-nowrap">HELPDESK</span>
+        </a>
+        <nav class="flex items-center gap-1 sm:gap-3 text-sm">
+          <button onclick="showSection('dashboard')" id="navDashboard" class="px-2.5 py-1.5 rounded text-accent font-medium">Dashboard</button>
+          <button onclick="showSection('incidents')" id="navIncidents" class="px-2.5 py-1.5 rounded text-white/70 hover:text-accent">Incidents</button>
+          <button onclick="showSection('properties')" id="navProperties" class="px-2.5 py-1.5 rounded text-white/70 hover:text-accent">Properties</button>
+          <button onclick="showSection('reports')" id="navReports" class="px-2.5 py-1.5 rounded text-white/70 hover:text-accent">Reports</button>
+          <span id="userName" class="hidden sm:inline text-white/50 text-xs ml-2"></span>
+          <button onclick="logout()" class="text-white/60 hover:text-white text-xs ml-1">Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <main id="sectionDashboard" class="max-w-6xl mx-auto px-4 py-6">
+      <div class="flex items-center justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-semibold text-navy">Dashboard</h1>
+          <p class="text-sm text-navy/50 mt-0.5">Overview of all helpdesk activity</p>
+        </div>
+        <button onclick="loadDashboard()" class="text-sm text-accent hover:underline">Refresh</button>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+        <div class="kpi bg-white rounded-xl border border-navy/5 p-4 shadow-sm"><p class="text-[10px] uppercase tracking-wider text-navy/40">Open</p><p id="kpiOpen" class="text-2xl font-semibold text-emerald-700 mt-1">—</p></div>
+        <div class="kpi bg-white rounded-xl border border-navy/5 p-4 shadow-sm"><p class="text-[10px] uppercase tracking-wider text-navy/40">Closed</p><p id="kpiClosed" class="text-2xl font-semibold text-navy/70 mt-1">—</p></div>
+        <div class="kpi bg-white rounded-xl border border-navy/5 p-4 shadow-sm"><p class="text-[10px] uppercase tracking-wider text-navy/40">Total</p><p id="kpiTotal" class="text-2xl font-semibold text-navy mt-1">—</p></div>
+        <div class="kpi bg-white rounded-xl border border-navy/5 p-4 shadow-sm"><p class="text-[10px] uppercase tracking-wider text-navy/40">Today</p><p id="kpiToday" class="text-2xl font-semibold text-accent mt-1">—</p></div>
+        <div class="kpi bg-white rounded-xl border border-navy/5 p-4 shadow-sm"><p class="text-[10px] uppercase tracking-wider text-navy/40">This week</p><p id="kpiWeek" class="text-2xl font-semibold text-navy mt-1">—</p></div>
+        <div class="kpi bg-white rounded-xl border border-navy/5 p-4 shadow-sm"><p class="text-[10px] uppercase tracking-wider text-navy/40">Closed (7d)</p><p id="kpiClosedWeek" class="text-2xl font-semibold text-navy/70 mt-1">—</p></div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-navy/5 shadow-sm">
+          <div class="px-5 py-3 border-b border-navy/5 flex items-center justify-between"><h2 class="font-semibold text-navy">Recent open jobs</h2><button onclick="showSection('incidents'); document.getElementById('filterStatus').value='open'; loadIncidents();" class="text-xs text-accent hover:underline">View all</button></div>
+          <div id="recentOpen" class="divide-y divide-navy/5 max-h-80 overflow-y-auto"></div>
+        </div>
+        <div class="bg-white rounded-xl border border-navy/5 shadow-sm">
+          <div class="px-5 py-3 border-b border-navy/5 flex items-center justify-between"><h2 class="font-semibold text-navy">Latest activity</h2><button onclick="showSection('incidents'); loadIncidents();" class="text-xs text-accent hover:underline">View all</button></div>
+          <div id="recentAll" class="divide-y divide-navy/5 max-h-80 overflow-y-auto"></div>
+        </div>
+      </div>
+    </main>
+
+    <main id="sectionIncidents" class="hidden max-w-6xl mx-auto px-4 py-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+        <div><h1 class="text-2xl font-semibold text-navy">Incidents</h1><p class="text-sm text-navy/50">Search, filter and update jobs</p></div>
+        <div class="flex gap-2">
+          <button onclick="exportCsv()" class="text-sm border border-navy/15 bg-white px-3 py-2 rounded-lg hover:border-accent">Export CSV</button>
+          <button onclick="loadIncidents()" class="text-sm bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent/90">Refresh</button>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl border border-navy/5 p-4 mb-5 shadow-sm">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div class="lg:col-span-2"><label class="block text-[10px] uppercase tracking-wider text-navy/40 mb-1">Search</label><input type="search" id="filterQ" placeholder="Ref, name, phone, address…" class="w-full border border-navy/15 rounded-lg px-3 py-2 text-sm outline-none focus:border-accent" /></div>
+          <div><label class="block text-[10px] uppercase tracking-wider text-navy/40 mb-1">Status</label><select id="filterStatus" class="w-full border border-navy/15 rounded-lg px-3 py-2 text-sm bg-white"><option value="">All statuses</option><option value="open">Open</option><option value="closed">Closed</option></select></div>
+          <div><label class="block text-[10px] uppercase tracking-wider text-navy/40 mb-1">Property</label><select id="filterDev" class="w-full border border-navy/15 rounded-lg px-3 py-2 text-sm bg-white"><option value="">All properties</option></select></div>
+          <div class="flex items-end gap-2"><button onclick="loadIncidents()" class="flex-1 bg-navy text-white text-sm py-2 rounded-lg hover:bg-navy/90">Apply</button><button onclick="clearFilters()" class="text-sm text-navy/50 hover:text-navy px-2 py-2">Clear</button></div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
+          <div><label class="block text-[10px] uppercase tracking-wider text-navy/40 mb-1">From</label><input type="date" id="filterFrom" class="w-full border border-navy/15 rounded-lg px-3 py-2 text-sm" /></div>
+          <div><label class="block text-[10px] uppercase tracking-wider text-navy/40 mb-1">To</label><input type="date" id="filterTo" class="w-full border border-navy/15 rounded-lg px-3 py-2 text-sm" /></div>
+        </div>
+      </div>
+      <div id="incidentList" class="space-y-2"></div>
+      <p id="emptyMsg" class="hidden text-center text-navy/40 py-16 text-lg">No incidents match your filters</p>
+      <p id="incidentCount" class="text-xs text-navy/40 mt-4 text-center"></p>
+    </main>
+
+    <main id="sectionProperties" class="hidden max-w-6xl mx-auto px-4 py-6">
+      <div class="flex items-center justify-between mb-6">
+        <div><h1 class="text-2xl font-semibold text-navy">Properties</h1><p class="text-sm text-navy/50">Verified addresses used for incidents</p></div>
+        <button onclick="openPropertyModal()" class="bg-accent text-white px-4 py-2 rounded-lg text-sm hover:bg-accent/90">+ Add Property</button>
+      </div>
+      <div id="propertyList" class="space-y-2"></div>
+      <p id="propEmpty" class="hidden text-center text-navy/40 py-16 text-lg">No properties yet. Addresses are also created automatically when customers report.</p>
+    </main>
+
+    <main id="sectionReports" class="hidden max-w-6xl mx-auto px-4 py-6">
+      <div class="mb-6"><h1 class="text-2xl font-semibold text-navy">Reports</h1><p class="text-sm text-navy/50">Export and summarise helpdesk activity</p></div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-navy/5 p-6 shadow-sm">
+          <h2 class="font-semibold text-navy mb-4">Export incidents</h2>
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div><label class="block text-[10px] uppercase tracking-wider text-navy/40 mb-1">From</label><input type="date" id="reportFrom" class="w-full border border-navy/15 rounded-lg px-3 py-2 text-sm" /></div>
+            <div><label class="block text-[10px] uppercase tracking-wider text-navy/40 mb-1">To</label><input type="date" id="reportTo" class="w-full border border-navy/15 rounded-lg px-3 py-2 text-sm" /></div>
+          </div>
+          <div class="mb-4"><label class="block text-[10px] uppercase tracking-wider text-navy/40 mb-1">Status</label><select id="reportStatus" class="w-full border border-navy/15 rounded-lg px-3 py-2 text-sm bg-white"><option value="">All</option><option value="open">Open only</option><option value="closed">Closed only</option></select></div>
+          <button onclick="runExport()" class="w-full bg-navy text-white py-2.5 rounded-lg text-sm font-medium hover:bg-navy/90">Download CSV</button>
+          <p id="exportMsg" class="text-xs text-navy/40 mt-3 text-center"></p>
+        </div>
+        <div class="bg-white rounded-xl border border-navy/5 p-6 shadow-sm">
+          <h2 class="font-semibold text-navy mb-4">Quick summary</h2>
+          <div id="reportSummary" class="space-y-3 text-sm text-navy/70"><p>Load the dashboard or run an export to refresh summary data.</p></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="detailOverlay" class="hidden fixed inset-0 bg-black/30 z-30" onclick="closeDetail()"></div>
+  <aside id="detailPanel" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-40 transform translate-x-full overflow-y-auto">
+    <div class="sticky top-0 bg-white border-b border-navy/10 px-5 py-4 flex items-center justify-between">
+      <div><p class="text-[10px] uppercase tracking-wider text-navy/40">Incident</p><p id="detailRef" class="font-mono font-semibold text-lg"></p></div>
+      <button onclick="closeDetail()" class="text-navy/50 hover:text-navy text-2xl leading-none">&times;</button>
+    </div>
+    <div class="p-5 space-y-5">
+      <div class="flex items-center gap-2"><span id="detailStatus" class="px-2.5 py-0.5 rounded-full text-xs font-medium"></span><span id="detailPhotos" class="text-xs text-navy/40"></span></div>
+      <div><p class="text-[10px] uppercase tracking-wider text-navy/40">Property</p><p id="detailDev" class="font-medium"></p><p id="detailAddr" class="text-sm text-navy/50"></p></div>
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div><p class="text-[10px] uppercase tracking-wider text-navy/40">Reporter</p><p id="detailReporter" class="font-medium"></p></div>
+        <div><p class="text-[10px] uppercase tracking-wider text-navy/40">Contact</p><p id="detailContact" class="font-medium text-sm break-all"></p></div>
+        <div><p class="text-[10px] uppercase tracking-wider text-navy/40">Logged</p><p id="detailCreated" class="font-medium"></p></div>
+        <div><p class="text-[10px] uppercase tracking-wider text-navy/40">Updated</p><p id="detailUpdated" class="font-medium"></p></div>
+      </div>
+      <div><p class="text-[10px] uppercase tracking-wider text-navy/40">Description</p><p id="detailDesc" class="text-navy/80 mt-1 text-sm leading-relaxed"></p></div>
+      <div id="detailPhotosBox" class="hidden"><p class="text-[10px] uppercase tracking-wider text-navy/40 mb-2">Photos</p><div id="detailPhotoGrid" class="flex flex-wrap gap-2"></div></div>
+      <div><p class="text-[10px] uppercase tracking-wider text-navy/40 mb-2">Timeline</p><ol id="detailTimeline" class="relative border-l border-navy/15 ml-2 space-y-4 pl-4"></ol></div>
+      <div class="border-t border-navy/10 pt-5">
+        <h3 class="font-semibold text-navy mb-3">Update job</h3>
+        <form id="updateForm" class="space-y-3">
+          <input type="hidden" id="updRef" />
+          <div><label class="block text-xs font-medium text-navy/50 mb-1">Status</label><select id="updStatus" class="w-full border border-navy/15 rounded-lg px-3 py-2.5 text-sm bg-white"><option value="open">Open</option><option value="closed">Closed</option></select></div>
+          <div><label class="block text-xs font-medium text-navy/50 mb-1">Note (optional)</label><textarea id="updNote" rows="3" placeholder="Progress note visible to customer…" class="w-full border border-navy/15 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-accent resize-none"></textarea></div>
+          <div id="updError" class="hidden text-red-700 text-sm"></div>
+          <button type="submit" class="w-full bg-accent text-white py-2.5 rounded-lg font-medium hover:bg-accent/90">Save update</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <div id="propModal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onclick="event.stopPropagation()">
+      <h2 id="propModalTitle" class="text-xl font-semibold text-navy mb-4">Add Property</h2>
+      <form id="propForm" class="space-y-3">
+        <input type="hidden" id="propId" />
+        <div><label class="block text-xs font-medium text-navy/50 mb-1">Display name *</label><input type="text" id="propName" required class="w-full border border-navy/15 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-accent" placeholder="e.g. 12 Smith St" /></div>
+        <div><label class="block text-xs font-medium text-navy/50 mb-1">Code (optional)</label><input type="text" id="propCode" class="w-full border border-navy/15 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-accent" placeholder="Short code" /></div>
+        <div>
+          <label class="block text-xs font-medium text-navy/50 mb-1">Address *</label>
+          <input type="text" id="propAddress" required autocomplete="off" class="w-full border border-navy/15 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-accent" placeholder="Start typing address…" />
+          <p id="propAddressStatus" class="text-xs mt-1 text-navy/40">Select a suggestion to verify the address</p>
+          <input type="hidden" id="propPlaceId" /><input type="hidden" id="propFormatted" /><input type="hidden" id="propLat" /><input type="hidden" id="propLng" />
+        </div>
+        <div id="propError" class="hidden text-red-700 text-sm"></div>
+        <div class="flex gap-3 pt-1">
+          <button type="button" onclick="closePropModal()" class="flex-1 border border-navy/15 py-2.5 rounded-lg text-sm">Cancel</button>
+          <button type="submit" class="flex-1 bg-accent text-white py-2.5 rounded-lg font-medium text-sm hover:bg-accent/90">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let token = localStorage.getItem('rbs_token') || '';
+    let displayName = localStorage.getItem('rbs_name') || '';
+    let placesAutocomplete = null;
+    let googleReady = false;
+    let mapsKeyLoaded = false;
+    let allIncidentsCache = [];
+    let currentDetail = null;
+
+    function formatDate(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso.includes('T') ? iso : iso + 'Z');
+      return d.toLocaleString('en-AU', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    function formatDateShort(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso.includes('T') ? iso : iso + 'Z');
+      return d.toLocaleString('en-AU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    }
+
+    async function loadGoogleMaps() {
+      if (mapsKeyLoaded || !token) return;
+      try {
+        const res = await fetch('/api/admin/maps-key', { headers: { Authorization: 'Bearer ' + token } });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.key) return;
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(data.key) + '&libraries=places';
+          script.async = true;
+          script.onload = () => { googleReady = true; mapsKeyLoaded = true; resolve(); };
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      } catch (e) { console.warn('Could not load Google Maps', e); }
+    }
+
+    if (token) { showDash(); loadGoogleMaps(); }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('loginError');
+      err.classList.add('hidden');
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: document.getElementById('username').value, password: document.getElementById('password').value })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Login failed');
+        token = data.token;
+        displayName = data.display_name;
+        localStorage.setItem('rbs_token', token);
+        localStorage.setItem('rbs_name', displayName);
+        showDash();
+        loadGoogleMaps();
+      } catch (ex) {
+        err.textContent = ex.message;
+        err.classList.remove('hidden');
+      }
+    });
+
+    function logout() {
+      token = '';
+      localStorage.removeItem('rbs_token');
+      localStorage.removeItem('rbs_name');
+      document.getElementById('loginView').classList.remove('hidden');
+      document.getElementById('dashView').classList.add('hidden');
+      closeDetail();
+    }
+
+    function showDash() {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('dashView').classList.remove('hidden');
+      document.getElementById('userName').textContent = displayName;
+      showSection('dashboard');
+    }
+
+    function showSection(name) {
+      ['dashboard', 'incidents', 'properties', 'reports'].forEach(s => {
+        const el = document.getElementById('section' + s.charAt(0).toUpperCase() + s.slice(1));
+        if (el) el.classList.toggle('hidden', s !== name);
+        const nav = document.getElementById('nav' + s.charAt(0).toUpperCase() + s.slice(1));
+        if (nav) nav.className = 'px-2.5 py-1.5 rounded ' + (s === name ? 'text-accent font-medium' : 'text-white/70 hover:text-accent');
+      });
+      if (name === 'dashboard') loadDashboard();
+      if (name === 'incidents') loadIncidents();
+      if (name === 'properties') loadProperties();
+      if (name === 'reports') loadReportSummary();
+    }
+
+    async function loadDashboard() {
+      try {
+        const res = await fetch('/api/admin/incidents?stats=1&limit=30', { headers: { Authorization: 'Bearer ' + token } });
+        if (res.status === 401) { logout(); return; }
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Failed');
+        const s = data.stats || {};
+        document.getElementById('kpiOpen').textContent = s.open ?? '—';
+        document.getElementById('kpiClosed').textContent = s.closed ?? '—';
+        document.getElementById('kpiTotal').textContent = s.total ?? '—';
+        document.getElementById('kpiToday').textContent = s.today ?? '—';
+        document.getElementById('kpiWeek').textContent = s.week ?? '—';
+        document.getElementById('kpiClosedWeek').textContent = s.closed_week ?? '—';
+
+        const openList = (data.incidents || []).filter(i => i.status === 'open').slice(0, 8);
+        const recentBox = document.getElementById('recentOpen');
+        recentBox.innerHTML = openList.length ? '' : '<p class="p-5 text-sm text-navy/40">No open jobs</p>';
+        openList.forEach(i => {
+          const row = document.createElement('button');
+          row.className = 'w-full text-left px-5 py-3 hover:bg-cream/80 transition';
+          row.innerHTML = `<div class="flex justify-between gap-2"><span class="font-mono text-sm font-medium">${esc(i.reference)}</span><span class="text-xs text-navy/40">${formatDateShort(i.created_at)}</span></div><p class="text-sm text-navy/70 mt-0.5 truncate">${esc(i.development_name || '')}</p><p class="text-xs text-navy/50 mt-0.5 line-clamp-2">${esc(i.description || '')}</p>`;
+          row.onclick = () => openDetail(i.reference);
+          recentBox.appendChild(row);
+        });
+
+        const allBox = document.getElementById('recentAll');
+        allBox.innerHTML = '';
+        (data.incidents || []).slice(0, 10).forEach(i => {
+          const row = document.createElement('button');
+          row.className = 'w-full text-left px-5 py-3 hover:bg-cream/80 transition';
+          const badge = i.status === 'open' ? '<span class="status-open px-1.5 py-0.5 rounded text-[10px] font-medium">Open</span>' : '<span class="status-closed px-1.5 py-0.5 rounded text-[10px] font-medium">Closed</span>';
+          row.innerHTML = `<div class="flex justify-between gap-2 items-center"><span class="font-mono text-sm font-medium">${esc(i.reference)}</span>${badge}</div><p class="text-sm text-navy/70 mt-0.5 truncate">${esc(i.development_name || '')} · ${formatDateShort(i.updated_at || i.created_at)}</p>`;
+          row.onclick = () => openDetail(i.reference);
+          allBox.appendChild(row);
+        });
+      } catch (err) { console.error(err); }
+    }
+
+    function clearFilters() {
+      document.getElementById('filterQ').value = '';
+      document.getElementById('filterStatus').value = '';
+      document.getElementById('filterDev').value = '';
+      document.getElementById('filterFrom').value = '';
+      document.getElementById('filterTo').value = '';
+      loadIncidents();
+    }
+
+    async function loadIncidents() {
+      const list = document.getElementById('incidentList');
+      const empty = document.getElementById('emptyMsg');
+      list.innerHTML = '<p class="text-center text-navy/40 py-10">Loading…</p>';
+      empty.classList.add('hidden');
+      const params = new URLSearchParams();
+      params.set('limit', '200');
+      const q = document.getElementById('filterQ').value.trim();
+      const status = document.getElementById('filterStatus').value;
+      const dev = document.getElementById('filterDev').value;
+      const from = document.getElementById('filterFrom').value;
+      const to = document.getElementById('filterTo').value;
+      if (q) params.set('q', q);
+      if (status) params.set('status', status);
+      if (dev) params.set('development_id', dev);
+      if (from) params.set('date_from', from);
+      if (to) params.set('date_to', to);
+      try {
+        const res = await fetch('/api/admin/incidents?' + params.toString(), { headers: { Authorization: 'Bearer ' + token } });
+        if (res.status === 401) { logout(); return; }
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Failed to load');
+        const sel = document.getElementById('filterDev');
+        const current = sel.value;
+        sel.innerHTML = '<option value="">All properties</option>';
+        (data.developments || []).forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.id;
+          opt.textContent = d.name + (d.code ? ' (' + d.code + ')' : '');
+          sel.appendChild(opt);
+        });
+        if (current) sel.value = current;
+        allIncidentsCache = data.incidents || [];
+        list.innerHTML = '';
+        if (!allIncidentsCache.length) {
+          empty.classList.remove('hidden');
+          document.getElementById('incidentCount').textContent = '';
+          return;
+        }
+        allIncidentsCache.forEach(i => {
+          const open = i.status === 'open';
+          const card = document.createElement('div');
+          card.className = 'bg-white rounded-xl border border-navy/5 p-4 shadow-sm hover:border-accent/40 transition cursor-pointer';
+          card.onclick = (e) => { if (!e.target.closest('.upd-btn')) openDetail(i.reference); };
+          const contactBits = (i.reporter_contact || '').split('|').map(s => s.trim()).filter(Boolean);
+          card.innerHTML = `<div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="font-mono font-semibold text-navy">${esc(i.reference)}</p><p class="text-sm text-navy/50 truncate">${esc(i.development_name || '')}${i.unit ? ' · ' + esc(i.unit) : ''}</p></div><span class="shrink-0 px-2.5 py-0.5 rounded-full text-xs font-medium ${open ? 'status-open' : 'status-closed'}">${open ? 'Open' : 'Closed'}</span></div><p class="text-sm text-navy/80 mt-2 line-clamp-2">${esc(i.description || '')}</p>${i.latest_note ? '<p class="text-xs text-navy/50 mt-1.5 italic truncate">Latest: ' + esc(i.latest_note) + '</p>' : ''}<div class="flex items-center justify-between mt-3 text-xs text-navy/40"><span>${esc(i.reporter_name || '')}${contactBits[0] ? ' · ' + esc(contactBits[0]) : ''} · ${formatDateShort(i.created_at)}${i.photo_count ? ' · 📷 ' + i.photo_count : ''}</span><button class="upd-btn text-accent hover:underline font-medium" onclick="event.stopPropagation(); openDetail('${esc(i.reference)}')">Open</button></div>`;
+          list.appendChild(card);
+        });
+        document.getElementById('incidentCount').textContent = allIncidentsCache.length + ' incident' + (allIncidentsCache.length === 1 ? '' : 's');
+      } catch (err) {
+        list.innerHTML = '<p class="text-red-600 text-center py-10">' + esc(err.message) + '</p>';
+      }
+    }
+
+    async function openDetail(reference) {
+      currentDetail = reference;
+      document.getElementById('detailOverlay').classList.remove('hidden');
+      document.getElementById('detailPanel').classList.remove('translate-x-full');
+      document.getElementById('detailRef').textContent = reference;
+      document.getElementById('detailTimeline').innerHTML = '<li class="text-sm text-navy/40">Loading…</li>';
+      document.getElementById('detailPhotoGrid').innerHTML = '';
+      document.getElementById('detailPhotosBox').classList.add('hidden');
+      document.getElementById('updError').classList.add('hidden');
+      document.getElementById('updNote').value = '';
+      document.getElementById('updRef').value = reference;
+      try {
+        const res = await fetch('/api/track?ref=' + encodeURIComponent(reference));
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Not found');
+        const i = data.incident;
+        const open = i.status === 'open';
+        document.getElementById('detailStatus').className = 'px-2.5 py-0.5 rounded-full text-xs font-medium ' + (open ? 'status-open' : 'status-closed');
+        document.getElementById('detailStatus').textContent = open ? 'Open' : 'Closed';
+        document.getElementById('detailDev').textContent = i.development_name || '—';
+        document.getElementById('detailAddr').textContent = '';
+        document.getElementById('detailReporter').textContent = i.reporter_name || '—';
+        const cached = allIncidentsCache.find(x => x.reference === reference);
+        document.getElementById('detailContact').textContent = (cached && cached.reporter_contact) || '—';
+        if (cached && cached.development_address) document.getElementById('detailAddr').textContent = cached.development_address;
+        document.getElementById('detailCreated').textContent = formatDate(i.created_at);
+        document.getElementById('detailUpdated').textContent = formatDate(i.updated_at);
+        document.getElementById('detailDesc').textContent = i.description || '';
+        document.getElementById('updStatus').value = open ? 'open' : 'closed';
+        document.getElementById('detailPhotos').textContent = (data.photos || []).length ? (data.photos.length + ' photo' + (data.photos.length > 1 ? 's' : '')) : '';
+        const tl = document.getElementById('detailTimeline');
+        tl.innerHTML = '';
+        (data.updates || []).forEach(u => {
+          const li = document.createElement('li');
+          li.innerHTML = `<div class="absolute -left-[5px] mt-1.5 w-2.5 h-2.5 rounded-full ${u.status === 'closed' ? 'bg-red-400' : 'bg-accent'}"></div><p class="text-xs text-navy/40">${formatDate(u.created_at)} · ${esc(u.created_by || 'staff')}</p><p class="text-sm text-navy/80 mt-0.5">${esc(u.note || '')}</p>`;
+          tl.appendChild(li);
+        });
+        if (data.photos && data.photos.length) {
+          document.getElementById('detailPhotosBox').classList.remove('hidden');
+          const grid = document.getElementById('detailPhotoGrid');
+          data.photos.forEach(p => {
+            const img = document.createElement('img');
+            img.src = p.data_url;
+            img.className = 'w-20 h-20 object-cover rounded-lg border border-navy/10 cursor-pointer';
+            img.onclick = () => window.open(p.data_url, '_blank');
+            grid.appendChild(img);
+          });
+        }
+      } catch (err) {
+        document.getElementById('detailTimeline').innerHTML = '<li class="text-red-600 text-sm">' + esc(err.message) + '</li>';
+      }
+    }
+
+    function closeDetail() {
+      document.getElementById('detailOverlay').classList.add('hidden');
+      document.getElementById('detailPanel').classList.add('translate-x-full');
+      currentDetail = null;
+    }
+
+    document.getElementById('updateForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('updError');
+      errEl.classList.add('hidden');
+      try {
+        const res = await fetch('/api/admin/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ reference: document.getElementById('updRef').value, status: document.getElementById('updStatus').value, note: document.getElementById('updNote').value.trim() })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Update failed');
+        openDetail(document.getElementById('updRef').value);
+        loadIncidents();
+        loadDashboard();
+      } catch (ex) {
+        errEl.textContent = ex.message;
+        errEl.classList.remove('hidden');
+      }
+    });
+
+    async function loadProperties() {
+      const list = document.getElementById('propertyList');
+      const empty = document.getElementById('propEmpty');
+      list.innerHTML = '<p class="text-center text-navy/40 py-10">Loading…</p>';
+      try {
+        const res = await fetch('/api/admin/properties', { headers: { Authorization: 'Bearer ' + token } });
+        if (res.status === 401) { logout(); return; }
+        const data = await res.json();
+        const props = data.properties || data.developments || [];
+        list.innerHTML = '';
+        if (!props.length) { empty.classList.remove('hidden'); return; }
+        empty.classList.add('hidden');
+        props.forEach(p => {
+          const card = document.createElement('div');
+          card.className = 'bg-white rounded-xl border border-navy/5 p-4 shadow-sm flex items-start justify-between gap-3';
+          card.innerHTML = `<div class="min-w-0"><p class="font-semibold text-navy">${esc(p.name)}</p><p class="text-sm text-navy/50 truncate">${esc(p.formatted_address || p.address || '')}</p><p class="text-xs text-navy/40 mt-1">${p.code ? 'Code: ' + esc(p.code) + ' · ' : ''}ID ${p.id}</p></div><button class="text-xs text-red-600 hover:underline shrink-0" onclick="deleteProperty(${p.id}, '${esc(p.name).replace(/'/g, "\\'")}')">Delete</button>`;
+          list.appendChild(card);
+        });
+      } catch (err) {
+        list.innerHTML = '<p class="text-red-600 text-center py-10">' + esc(err.message) + '</p>';
+      }
+    }
+
+    function openPropertyModal() {
+      document.getElementById('propId').value = '';
+      document.getElementById('propName').value = '';
+      document.getElementById('propCode').value = '';
+      document.getElementById('propAddress').value = '';
+      document.getElementById('propPlaceId').value = '';
+      document.getElementById('propFormatted').value = '';
+      document.getElementById('propLat').value = '';
+      document.getElementById('propLng').value = '';
+      document.getElementById('propAddressStatus').textContent = 'Select a suggestion to verify the address';
+      document.getElementById('propAddressStatus').className = 'text-xs mt-1 text-navy/40';
+      document.getElementById('propError').classList.add('hidden');
+      document.getElementById('propModalTitle').textContent = 'Add Property';
+      document.getElementById('propModal').classList.remove('hidden');
+      setTimeout(initPlaces, 100);
+    }
+    function closePropModal() { document.getElementById('propModal').classList.add('hidden'); }
+
+    function initPlaces() {
+      if (!googleReady || !window.google || !google.maps || !google.maps.places) return;
+      const input = document.getElementById('propAddress');
+      if (placesAutocomplete) { google.maps.event.clearInstanceListeners(placesAutocomplete); placesAutocomplete = null; }
+      placesAutocomplete = new google.maps.places.Autocomplete(input, { types: ['address'], componentRestrictions: { country: 'au' } });
+      placesAutocomplete.addListener('place_changed', () => {
+        const place = placesAutocomplete.getPlace();
+        if (!place.geometry) return;
+        document.getElementById('propPlaceId').value = place.place_id || '';
+        document.getElementById('propFormatted').value = place.formatted_address || input.value;
+        document.getElementById('propLat').value = place.geometry.location.lat();
+        document.getElementById('propLng').value = place.geometry.location.lng();
+        document.getElementById('propAddressStatus').textContent = 'Verified address selected';
+        document.getElementById('propAddressStatus').className = 'text-xs mt-1 text-emerald-700';
+        if (!document.getElementById('propName').value) document.getElementById('propName').value = (place.formatted_address || '').split(',')[0] || '';
+      });
+    }
+
+    document.getElementById('propForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('propError');
+      errEl.classList.add('hidden');
+      const body = { name: document.getElementById('propName').value.trim(), code: document.getElementById('propCode').value.trim(), address: document.getElementById('propAddress').value.trim(), place_id: document.getElementById('propPlaceId').value, formatted_address: document.getElementById('propFormatted').value, lat: document.getElementById('propLat').value, lng: document.getElementById('propLng').value };
+      try {
+        const res = await fetch('/api/admin/properties', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Save failed');
+        closePropModal();
+        loadProperties();
+      } catch (ex) {
+        errEl.textContent = ex.message;
+        errEl.classList.remove('hidden');
+      }
+    });
+
+    async function deleteProperty(id, name) {
+      if (!confirm('Delete property "' + name + '"? This cannot be undone if incidents reference it.')) return;
+      try {
+        const res = await fetch('/api/admin/properties?id=' + id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + token } });
+        if (res.status === 401) { logout(); return; }
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Delete failed');
+        loadProperties();
+      } catch (ex) { alert(ex.message); }
+    }
+
+    async function loadReportSummary() {
+      try {
+        const res = await fetch('/api/admin/incidents?stats=1&limit=1', { headers: { Authorization: 'Bearer ' + token } });
+        if (res.status === 401) { logout(); return; }
+        const data = await res.json();
+        const s = data.stats || {};
+        document.getElementById('reportSummary').innerHTML = `<div class="flex justify-between"><span>Open jobs</span><strong>${s.open ?? 0}</strong></div><div class="flex justify-between"><span>Closed jobs</span><strong>${s.closed ?? 0}</strong></div><div class="flex justify-between"><span>Total jobs</span><strong>${s.total ?? 0}</strong></div><div class="flex justify-between"><span>Logged today</span><strong>${s.today ?? 0}</strong></div><div class="flex justify-between"><span>Logged this week</span><strong>${s.week ?? 0}</strong></div><div class="flex justify-between"><span>Closed in last 7 days</span><strong>${s.closed_week ?? 0}</strong></div>`;
+      } catch (e) {}
+    }
+
+    function csvEscape(v) {
+      const s = (v == null ? '' : String(v));
+      if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }
+
+    async function runExport() {
+      const msg = document.getElementById('exportMsg');
+      msg.textContent = 'Preparing…';
+      const params = new URLSearchParams();
+      params.set('limit', '500');
+      const status = document.getElementById('reportStatus').value;
+      const from = document.getElementById('reportFrom').value;
+      const to = document.getElementById('reportTo').value;
+      if (status) params.set('status', status);
+      if (from) params.set('date_from', from);
+      if (to) params.set('date_to', to);
+      try {
+        const res = await fetch('/api/admin/incidents?' + params.toString(), { headers: { Authorization: 'Bearer ' + token } });
+        if (res.status === 401) { logout(); return; }
+        const data = await res.json();
+        const rows = data.incidents || [];
+        if (!rows.length) { msg.textContent = 'No rows to export for the selected filters.'; return; }
+        const headers = ['Reference', 'Status', 'Property', 'Address', 'Reporter', 'Contact', 'Description', 'Latest note', 'Photos', 'Created', 'Updated'];
+        const lines = [headers.join(',')];
+        rows.forEach(i => {
+          lines.push([csvEscape(i.reference), csvEscape(i.status), csvEscape(i.development_name), csvEscape(i.development_address), csvEscape(i.reporter_name), csvEscape(i.reporter_contact), csvEscape(i.description), csvEscape(i.latest_note), csvEscape(i.photo_count), csvEscape(i.created_at), csvEscape(i.updated_at)].join(','));
+        });
+        const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'rbs-helpdesk-incidents-' + new Date().toISOString().slice(0, 10) + '.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        msg.textContent = 'Downloaded ' + rows.length + ' rows.';
+      } catch (err) { msg.textContent = err.message; }
+    }
+
+    function exportCsv() {
+      document.getElementById('reportFrom').value = document.getElementById('filterFrom').value;
+      document.getElementById('reportTo').value = document.getElementById('filterTo').value;
+      document.getElementById('reportStatus').value = document.getElementById('filterStatus').value;
+      showSection('reports');
+      runExport();
+    }
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>').replace(/"/g, '"');
+    }
+
+    document.getElementById('filterQ').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); loadIncidents(); }
+    });
+  </script>
+</body>
+</html>
