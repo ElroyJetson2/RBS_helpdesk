@@ -6,23 +6,20 @@
   <title>How to log an incident – RBS Helpdesk</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <script>tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#0B1426'},gold:{DEFAULT:'#C9A962'},cream:'#F7F4EF'},fontFamily:{serif:['Cormorant Garamond','Georgia','serif']}}}}</script>
+  <script>tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#0B1426'},gold:{DEFAULT:'#C9A962'},accent:{DEFAULT:'#1C9AD6'},cream:'#F7F4EF'},fontFamily:{serif:['Cormorant Garamond','Georgia','serif']}}}}</script>
   <style>body{font-family:Inter,system-ui,sans-serif}.font-serif{font-family:'Cormorant Garamond',Georgia,serif}</style>
 </head>
 <body class="bg-cream min-h-screen text-navy">
   <header class="bg-navy text-white">
-    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-full border border-gold/60 flex items-center justify-center text-gold text-sm font-serif font-bold">RBS</div>
-        <div>
-          <div class="font-serif text-lg tracking-wide text-gold leading-tight">RBS Helpdesk</div>
-          <div class="text-[10px] uppercase tracking-[0.2em] text-white/50">Incident Portal</div>
-        </div>
+    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+      <a href="/" class="flex items-center gap-3 min-w-0 ">
+        <img src="https://static.wixstatic.com/media/01636e_59a9c7e5033445a6a91de7079e496a0e~mv2.png/v1/fill/w_388,h_86,al_c,q_85,usm_0.66_1.00_0.01,enc_png/RBS%20Logo%20White%20Horizontal.png" alt="Require Building Solutions" class="h-9 sm:h-10 w-auto max-w-[160px] object-contain" />
+        <span class="text-white font-semibold tracking-[0.28em] text-xs sm:text-sm border-l border-white/30 pl-3 whitespace-nowrap">HELPDESK</span>
       </a>
-      <nav class="flex gap-4 text-sm">
-        <a href="/" class="text-white/70 hover:text-gold">Report</a>
-        <a href="/track.html" class="text-white/70 hover:text-gold">Track</a>
-        <a href="/admin.html" class="text-white/70 hover:text-gold">Staff</a>
+      <nav class="flex gap-4 text-sm shrink-0">
+        <a href="/" class="text-white/70 hover:text-accent">Report</a>
+        <a href="/track.html" class="text-white/70 hover:text-accent">Track</a>
+        <a href="/admin.html" class="text-white/70 hover:text-accent">Staff</a>
       </nav>
     </div>
   </header>
@@ -40,9 +37,8 @@
         <h2 class="font-serif text-xl text-navy mb-3">Step by step</h2>
         <ol class="space-y-4 list-decimal list-inside text-navy/80">
           <li><span class="font-medium text-navy">Open the portal</span> — go to the Report page and start a new request.</li>
-          <li><span class="font-medium text-navy">Select your property</span> — choose from the list of approved properties.</li>
-          <li><span class="font-medium text-navy">Add unit details</span> — enter your unit, apartment, or lot number if applicable.</li>
-          <li><span class="font-medium text-navy">Your name and contact</span> — use a <strong>10-digit phone number</strong> or a <strong>valid email</strong>.</li>
+          <li><span class="font-medium text-navy">Enter the property address</span> — start typing and choose a verified address from the suggestions.</li>
+          <li><span class="font-medium text-navy">Your name, phone and email</span> — both a <strong>10-digit phone number</strong> and a <strong>valid email</strong> are required.</li>
           <li><span class="font-medium text-navy">Describe the issue</span> — say what is wrong, where it is, and if it is urgent.</li>
           <li><span class="font-medium text-navy">Add photos (optional)</span> — up to 5 photos. Tap the × on a photo if you selected the wrong one.</li>
           <li><span class="font-medium text-navy">Submit</span> — press Submit Incident. Copy and keep your <strong>reference number</strong>.</li>
@@ -73,7 +69,7 @@
       </div>
     </div>
 
-    <p class="text-center text-xs text-navy/40 mt-8">RBS Helpdesk · Require Building Solutions · helpdesk@requirebuilding.com.au</p>
+    <p class="text-center text-xs text-navy/40 mt-8">Require Building Solutions · Helpdesk · helpdesk@requirebuilding.com.au</p>
   </main>
 </body>
 </html>
