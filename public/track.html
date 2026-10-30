@@ -6,14 +6,16 @@
   <title>Track Incident – RBS Helpdesk</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <script>tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#0B1426'},gold:{DEFAULT:'#C9A962'},cream:'#F7F4EF'},fontFamily:{serif:['Cormorant Garamond','Georgia','serif']}}}}</script>
+  <script>tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#0B1426'},gold:{DEFAULT:'#C9A962'},accent:{DEFAULT:'#1C9AD6'},cream:'#F7F4EF'},fontFamily:{serif:['Cormorant Garamond','Georgia','serif']}}}}</script>
   <style>body{font-family:Inter,system-ui,sans-serif}.font-serif{font-family:'Cormorant Garamond',Georgia,serif}</style>
 </head>
 <body class="bg-cream min-h-screen text-navy">
-  <header class="bg-navy text-white"><div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-    <a href="/" class="flex items-center gap-3"><div class="w-9 h-9 rounded-full border border-gold/60 flex items-center justify-center text-gold text-sm font-serif font-bold">RBS</div>
-    <div><div class="font-serif text-lg tracking-wide text-gold">RBS Helpdesk</div><div class="text-[10px] uppercase tracking-[0.2em] text-white/50">Incident Portal</div></div></a>
-    <nav class="flex gap-5 text-sm"><a href="/" class="text-white/70 hover:text-gold">Report</a><a href="/track.html" class="text-gold border-b border-gold pb-0.5">Track</a><a href="/admin.html" class="text-white/70 hover:text-gold">Staff</a></nav>
+  <header class="bg-navy text-white"><div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+    <a href="/" class="flex items-center gap-3 min-w-0 ">
+        <img src="https://static.wixstatic.com/media/01636e_59a9c7e5033445a6a91de7079e496a0e~mv2.png/v1/fill/w_388,h_86,al_c,q_85,usm_0.66_1.00_0.01,enc_png/RBS%20Logo%20White%20Horizontal.png" alt="Require Building Solutions" class="h-9 sm:h-10 w-auto max-w-[160px] object-contain" />
+        <span class="text-white font-semibold tracking-[0.28em] text-xs sm:text-sm border-l border-white/30 pl-3 whitespace-nowrap">HELPDESK</span>
+      </a>
+    <nav class="flex gap-4 sm:gap-5 text-sm shrink-0"><a href="/" class="text-white/70 hover:text-accent">Report</a><a href="/track.html" class="text-accent border-b border-accent pb-0.5">Track</a><a href="/admin.html" class="text-white/70 hover:text-accent">Staff</a></nav>
   </div></header>
   <main class="max-w-xl mx-auto px-4 py-10">
     <div class="text-center mb-8"><h1 class="font-serif text-3xl text-navy font-semibold">Track Your Incident</h1><p class="text-navy/60 mt-2 text-sm">Enter your reference number</p></div>
@@ -38,7 +40,6 @@
     </div>
   </main>
 
-  <!-- Photo lightbox -->
   <div id="lightbox" class="hidden fixed inset-0 z-50 bg-navy/80 flex items-center justify-center p-4" role="dialog" aria-modal="true">
     <button type="button" id="lightboxClose" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 text-white text-2xl leading-none hover:bg-white/20" aria-label="Close">&times;</button>
     <img id="lightboxImg" src="" alt="Enlarged photo" class="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain" />
