@@ -3,7 +3,7 @@ import { notifyNewJob } from '../lib/email.js';
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 
@@ -18,12 +18,12 @@ function genRef() {
   return `RBS-${y}${m}${day}-${suffix}`;
 }
 
-function isValidContact(s) {
-  const t = (s || '').trim();
-  if (!t) return false;
-  if (t.includes('@')) return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
-  const digits = t.replace(/\D/g, '');
-  return digits.length === 10;
+function isValidEmail(s) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((s || '').trim());
+}
+
+function isValidPhone(s) {
+  return (s || '').replace(/\D/g, '').length === 10;
 }
 
 function arrayBufferToBase64(buffer) {
@@ -41,11 +41,15 @@ async function readPhotos(request) {
   if (ct.includes('multipart/form-data')) {
     const form = await request.formData();
     const fields = {
-      development_id: form.get('development_id'),
-      unit: form.get('unit') || '',
+      place_id: form.get('place_id') || '',
+      formatted_address: form.get('formatted_address') || '',
+      address_name: form.get('address_name') || '',
+      lat: form.get('lat') || '',
+      lng: form.get('lng') || '',
       reporter_name: form.get('reporter_name'),
-      reporter_contact: form.get('reporter_contact'),
-      description: form.get('description')
+      reporter_phone: form.get('reporter_phone'),
+      reporter_email: form.get('reporter_email'),
+      description: form.get('description'),
     };
     const photos = [];
     for (const [key, val] of form.entries()) {
@@ -64,52 +68,107 @@ async function readPhotos(request) {
   const photos = Array.isArray(body.photos) ? body.photos.slice(0, 5) : [];
   return {
     fields: body,
-    photos: photos.filter(p => typeof p === 'string' && p.startsWith('data:image/'))
+    photos: photos.filter((p) => typeof p === 'string' && p.startsWith('data:image/')),
   };
+}
+
+async function upsertDevelopment(env, fields) {
+  const placeId = (fields.place_id || '').toString().trim();
+  const formatted = (fields.formatted_address || fields.address_name || '').toString().trim();
+  const name = (fields.address_name || formatted).toString().trim().slice(0, 120);
+  const lat = fields.lat === '' || fields.lat == null ? null : Number(fields.lat);
+  const lng = fields.lng === '' || fields.lng == null ? null : Number(fields.lng);
+
+  if (!formatted) throw new Error('Please choose an address from the suggestions.');
+
+  if (placeId) {
+    const existing = await env.DB.prepare(
+      'SELECT id FROM developments WHERE place_id = ?'
+    )
+      .bind(placeId)
+      .first();
+    if (existing) return existing.id;
+  }
+
+  const byName = await env.DB.prepare(
+    'SELECT id FROM developments WHERE name = ? OR formatted_address = ?'
+  )
+    .bind(name, formatted)
+    .first();
+  if (byName) return byName.id;
+
+  const code = 'A' + Math.random().toString(36).slice(2, 8).toUpperCase();
+  await env.DB.prepare(
+    `INSERT INTO developments (name, code, address, place_id, formatted_address, lat, lng)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(name, code, formatted, placeId || null, formatted, lat, lng)
+    .run();
+
+  const row = await env.DB.prepare(
+    'SELECT id FROM developments WHERE place_id = ? OR formatted_address = ? ORDER BY id DESC LIMIT 1'
+  )
+    .bind(placeId || '', formatted)
+    .first();
+  if (!row) throw new Error('Could not save address');
+  return row.id;
 }
 
 export async function onRequestPost(context) {
   const { request, env } = context;
   try {
     const { fields, photos } = await readPhotos(request);
-    const development_id = parseInt(fields.development_id, 10);
-    const unit = (fields.unit || '').toString().trim();
     const reporter_name = (fields.reporter_name || '').toString().trim();
-    const reporter_contact = (fields.reporter_contact || '').toString().trim();
+    const reporter_phone = (fields.reporter_phone || '').toString().trim();
+    const reporter_email = (fields.reporter_email || '').toString().trim();
     const description = (fields.description || '').toString().trim();
 
-    if (!development_id || !reporter_name || !reporter_contact || !description) {
+    if (!reporter_name || !reporter_phone || !reporter_email || !description) {
       return json({ error: 'Please fill in all required fields' }, 400);
     }
-    if (!isValidContact(reporter_contact)) {
-      return json({ error: 'Please enter a 10-digit phone number or a valid email address' }, 400);
+    if (!isValidPhone(reporter_phone)) {
+      return json({ error: 'Please enter a valid 10-digit phone number' }, 400);
+    }
+    if (!isValidEmail(reporter_email)) {
+      return json({ error: 'Please enter a valid email address' }, 400);
     }
 
+    const development_id = await upsertDevelopment(env, fields);
+    const reporter_contact = `${reporter_phone} | ${reporter_email}`;
     const reference = genRef();
 
     await env.DB.prepare(
       `INSERT INTO incidents (reference, development_id, unit, reporter_name, reporter_contact, description, status)
        VALUES (?, ?, ?, ?, ?, ?, 'open')`
-    ).bind(reference, development_id, unit, reporter_name, reporter_contact, description).run();
+    )
+      .bind(reference, development_id, '', reporter_name, reporter_contact, description)
+      .run();
 
-    const row = await env.DB.prepare('SELECT id FROM incidents WHERE reference = ?').bind(reference).first();
+    const row = await env.DB.prepare('SELECT id FROM incidents WHERE reference = ?')
+      .bind(reference)
+      .first();
     const incidentId = row.id;
 
     await env.DB.prepare(
       `INSERT INTO updates (incident_id, status, note, created_by) VALUES (?, 'open', 'Incident logged by customer', 'customer')`
-    ).bind(incidentId).run();
+    )
+      .bind(incidentId)
+      .run();
 
     for (const dataUrl of photos) {
       if (dataUrl.length > 2_000_000) continue;
-      await env.DB.prepare(`INSERT INTO photos (incident_id, data_url) VALUES (?, ?)`).bind(incidentId, dataUrl).run();
+      await env.DB.prepare(`INSERT INTO photos (incident_id, data_url) VALUES (?, ?)`)
+        .bind(incidentId, dataUrl)
+        .run();
     }
 
     const full = await env.DB.prepare(
       `SELECT i.*, d.name AS development_name FROM incidents i
        JOIN developments d ON d.id = i.development_id WHERE i.reference = ?`
-    ).bind(reference).first();
+    )
+      .bind(reference)
+      .first();
 
-    // Await email so we know if staff notification worked (do not fail the job if email fails)
     let email = { ok: false, reason: 'not attempted' };
     try {
       email = await notifyNewJob(env, full);
@@ -121,10 +180,10 @@ export async function onRequestPost(context) {
       success: true,
       reference,
       track_url: `/track.html?ref=${encodeURIComponent(reference)}`,
-      email
+      email,
     });
   } catch (err) {
     console.error('report error', err);
-    return json({ error: 'Failed to create incident', details: err.message }, 500);
+    return json({ error: err.message || 'Failed to create incident', details: err.message }, 500);
   }
 }
