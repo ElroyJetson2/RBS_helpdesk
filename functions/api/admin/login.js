@@ -1,7 +1,6 @@
 /**
  * POST /api/admin/login
- * Simple username/password login. Returns a token (base64 of username:password for demo).
- * In production replace with proper JWT or Cloudflare Access.
+ * Returns token + role + display_name
  */
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -14,20 +13,23 @@ export async function onRequestPost(context) {
     }
 
     const staff = await env.DB.prepare(
-      'SELECT id, username, display_name, password_hash FROM staff WHERE username = ?'
+      'SELECT id, username, display_name, password_hash, role, email FROM staff WHERE username = ?'
     ).bind(username.trim()).first();
 
     if (!staff || staff.password_hash !== password) {
       return json({ error: 'Invalid credentials' }, 401);
     }
 
-    // Simple token for demo (username:password base64). Replace with proper auth later.
+    const role = staff.role || 'admin';
     const token = btoa(`${staff.username}:${password}`);
 
     return json({
       success: true,
       token,
-      display_name: staff.display_name || staff.username
+      display_name: staff.display_name || staff.username,
+      role,
+      username: staff.username,
+      email: staff.email || null
     });
   } catch (err) {
     console.error('Login error:', err);
