@@ -1,6 +1,6 @@
 -- RBS Helpdesk – Incident Tracking
--- Statuses: open | closed only
--- Properties managed via admin panel with Google Places verification
+-- Statuses: open | assigned | in_progress | customer_sign_off | closed
+-- Roles: admin | viewer | contractor
 
 PRAGMA foreign_keys = ON;
 
@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS incidents (
   reporter_name TEXT NOT NULL,
   reporter_contact TEXT NOT NULL,
   description TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'open'
-    CHECK (status IN ('open','closed')),
+  status TEXT NOT NULL DEFAULT 'open',
+  assigned_to TEXT,
   last_reminder_at TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -52,18 +52,23 @@ CREATE TABLE IF NOT EXISTS staff (
   username TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   display_name TEXT,
+  role TEXT NOT NULL DEFAULT 'admin',
+  email TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_incidents_reference ON incidents(reference);
 CREATE INDEX IF NOT EXISTS idx_incidents_development ON incidents(development_id);
 CREATE INDEX IF NOT EXISTS idx_incidents_status ON incidents(status);
+CREATE INDEX IF NOT EXISTS idx_incidents_assigned ON incidents(assigned_to);
 CREATE INDEX IF NOT EXISTS idx_incidents_created ON incidents(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_updates_incident ON updates(incident_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_photos_incident ON photos(incident_id);
 
--- Start with empty property list – staff will add verified addresses via admin
--- (Old Elite properties intentionally not seeded)
+INSERT OR IGNORE INTO staff (username, password_hash, display_name, role, email) VALUES
+  ('admin', 'RBS@rbs1', 'RBS Helpdesk', 'admin', 'helpdesk@requirebuilding.com.au');
 
-INSERT OR IGNORE INTO staff (username, password_hash, display_name) VALUES
-  ('admin', 'RBS@rbs1', 'RBS Helpdesk');
+INSERT OR IGNORE INTO staff (username, password_hash, display_name, role, email) VALUES
+  ('captain', 'RBS@captain1', 'Captain', 'contractor', NULL),
+  ('cameron', 'RBS@cameron1', 'Cameron', 'contractor', NULL),
+  ('stevew', 'RBS@steve1', 'Steve W', 'contractor', NULL);
