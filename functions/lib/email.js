@@ -50,9 +50,9 @@ export async function sendEmail(env, { to, subject, text, html }) {
 
 function escapeHtml(s) {
   return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>');
 }
 
 function jobUrl(reference) {
@@ -98,21 +98,16 @@ export async function notifyNewJob(env, incident) {
 
   const html = emailShell(`
     <h1 style="margin:8px 0 16px;font-size:22px;font-weight:600;">New incident logged</h1>
-    <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">A customer has submitted a maintenance request. Click below to open the job.</p>
+    <p style="margin:0 0 16px;font-size:15px;line-height:1.5;">A customer has submitted a maintenance request.</p>
     <p style="margin:0 0 20px;">${buttonHtml(track, 'Open this job')}</p>
     <table style="width:100%;font-size:14px;line-height:1.6;border-collapse:collapse;">
       <tr><td style="padding:4px 0;color:#888;width:110px;">Reference</td><td style="padding:4px 0;font-weight:600;font-family:monospace;">${escapeHtml(ref)}</td></tr>
       <tr><td style="padding:4px 0;color:#888;">Property</td><td style="padding:4px 0;">${escapeHtml(incident.development_name || '—')}</td></tr>
-      <tr><td style="padding:4px 0;color:#888;">Unit</td><td style="padding:4px 0;">${escapeHtml(incident.unit || '—')}</td></tr>
       <tr><td style="padding:4px 0;color:#888;">Reporter</td><td style="padding:4px 0;">${escapeHtml(incident.reporter_name)}</td></tr>
       <tr><td style="padding:4px 0;color:#888;">Contact</td><td style="padding:4px 0;">${escapeHtml(incident.reporter_contact)}</td></tr>
     </table>
     <p style="margin:16px 0 4px;color:#888;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;">Description</p>
     <p style="margin:0 0 24px;font-size:14px;line-height:1.5;white-space:pre-wrap;">${escapeHtml(incident.description || '')}</p>
-    <p style="margin:0;font-size:13px;">
-      <a href="${track}" style="color:#C9A962;">${escapeHtml(track)}</a><br/>
-      <a href="${admin}" style="color:#C9A962;">Staff portal</a>
-    </p>
   `);
 
   return sendEmail(env, { to: staff, subject, text, html });
@@ -128,7 +123,6 @@ export async function notifyStatusChange(env, incident, note) {
     `Job ${ref} is now: ${incident.status.toUpperCase()}`,
     '',
     `Property: ${incident.development_name || '—'}`,
-    `Unit: ${incident.unit || '—'}`,
     note ? `Note: ${note}` : '',
     '',
     `Open this job: ${track}`
@@ -139,13 +133,15 @@ export async function notifyStatusChange(env, incident, note) {
     <p style="margin:0 0 16px;font-size:15px;">Reference <strong style="font-family:monospace;">${escapeHtml(ref)}</strong> is now <strong>${escapeHtml(incident.status.toUpperCase())}</strong>.</p>
     <p style="margin:0 0 20px;">${buttonHtml(track, 'Open this job')}</p>
     ${note ? `<p style="margin:0 0 16px;font-size:14px;"><strong>Note:</strong> ${escapeHtml(note)}</p>` : ''}
-    <p style="margin:0;font-size:13px;"><a href="${track}" style="color:#C9A962;">${escapeHtml(track)}</a></p>
   `);
 
   const staffResult = await sendEmail(env, { to: staff, subject, text, html });
 
   let customerResult = null;
-  if (isEmail(incident.reporter_contact)) {
+  // Try extract email from reporter_contact (may be "phone | email")
+  const contact = (incident.reporter_contact || '');
+  const maybeEmail = contact.includes('|') ? contact.split('|').map(s => s.trim()).find(isEmail) : (isEmail(contact) ? contact : null);
+  if (maybeEmail) {
     const custText = [
       `Hello ${incident.reporter_name},`,
       '',
@@ -157,19 +153,11 @@ export async function notifyStatusChange(env, incident, note) {
       '',
       '— RBS Helpdesk'
     ].join('\n');
-    const custHtml = emailShell(`
-      <h1 style="margin:8px 0 16px;font-size:22px;font-weight:600;">Update on your request</h1>
-      <p style="margin:0 0 12px;font-size:15px;">Hello ${escapeHtml(incident.reporter_name)},</p>
-      <p style="margin:0 0 16px;font-size:15px;">Your request <strong style="font-family:monospace;">${escapeHtml(ref)}</strong> is now <strong>${escapeHtml(incident.status.toUpperCase())}</strong>.</p>
-      ${note ? `<p style="margin:0 0 16px;font-size:14px;">${escapeHtml(note)}</p>` : ''}
-      <p style="margin:0 0 20px;">${buttonHtml(track, 'Track this job')}</p>
-      <p style="margin:0;font-size:13px;"><a href="${track}" style="color:#C9A962;">${escapeHtml(track)}</a></p>
-    `);
     customerResult = await sendEmail(env, {
-      to: incident.reporter_contact.trim(),
+      to: maybeEmail,
       subject: `Your job ${ref} is ${incident.status}`,
       text: custText,
-      html: custHtml
+      html: emailShell(`<h1 style="margin:8px 0 16px;font-size:22px;">Update on your request</h1><p>Your request <strong>${escapeHtml(ref)}</strong> is now <strong>${escapeHtml(incident.status)}</strong>.</p>${note?`<p>${escapeHtml(note)}</p>`:''}<p>${buttonHtml(track,'Track this job')}</p>`)
     });
   }
   return { staff: staffResult, customer: customerResult };
@@ -184,24 +172,60 @@ export async function notifyReminder(env, incident) {
       (1000 * 60 * 60 * 24)
   );
   const subject = `[Reminder] Open job ${ref} (${days}+ days)`;
+  const text = `This job is still open after ${days} days.\n\nReference: ${ref}\nProperty: ${incident.development_name || '—'}\n\nOpen: ${track}`;
+  return sendEmail(env, { to: staff, subject, text });
+}
+
+export async function notifyAssignment(env, incident, assigneeName) {
+  const staffInbox = staffEmail(env);
+  const ref = incident.reference;
+  const track = jobUrl(ref);
+  const admin = `${SITE}/admin.html`;
+
+  let assigneeEmail = null;
+  try {
+    const row = await env.DB.prepare(
+      `SELECT email FROM staff WHERE display_name = ? OR username = ? LIMIT 1`
+    ).bind(assigneeName, assigneeName).first();
+    if (row && row.email && isEmail(row.email)) assigneeEmail = row.email.trim();
+  } catch (e) {}
+
+  const subject = `[Assigned] ${ref} → ${assigneeName}`;
   const text = [
-    `This job is still OPEN after ${days} days.`,
+    `Job ${ref} has been assigned to ${assigneeName}.`,
     '',
-    `Reference: ${ref}`,
     `Property: ${incident.development_name || '—'}`,
-    `Unit: ${incident.unit || '—'}`,
+    `Status: ${incident.status}`,
     `Reporter: ${incident.reporter_name} · ${incident.reporter_contact}`,
     '',
+    'Description:',
+    incident.description || '',
+    '',
     `Open this job: ${track}`,
-    `Staff portal: ${SITE}/admin.html`
+    `Staff portal: ${admin}`
   ].join('\n');
 
   const html = emailShell(`
-    <h1 style="margin:8px 0 16px;font-size:22px;font-weight:600;">Open job reminder</h1>
-    <p style="margin:0 0 16px;font-size:15px;">Job <strong style="font-family:monospace;">${escapeHtml(ref)}</strong> is still open after <strong>${days}+ days</strong>.</p>
+    <h1 style="margin:8px 0 16px;font-size:22px;font-weight:600;">Job assigned</h1>
+    <p style="margin:0 0 16px;font-size:15px;">Reference <strong style="font-family:monospace;">${escapeHtml(ref)}</strong> has been assigned to <strong>${escapeHtml(assigneeName)}</strong>.</p>
     <p style="margin:0 0 20px;">${buttonHtml(track, 'Open this job')}</p>
-    <p style="margin:0;font-size:13px;"><a href="${track}" style="color:#C9A962;">${escapeHtml(track)}</a></p>
+    <table style="width:100%;font-size:14px;line-height:1.6;border-collapse:collapse;">
+      <tr><td style="padding:4px 0;color:#888;width:110px;">Property</td><td style="padding:4px 0;">${escapeHtml(incident.development_name || '—')}</td></tr>
+      <tr><td style="padding:4px 0;color:#888;">Status</td><td style="padding:4px 0;">${escapeHtml(incident.status)}</td></tr>
+      <tr><td style="padding:4px 0;color:#888;">Assignee</td><td style="padding:4px 0;">${escapeHtml(assigneeName)}</td></tr>
+    </table>
+    <p style="margin:16px 0 4px;color:#888;font-size:12px;text-transform:uppercase;letter-spacing:0.08em;">Description</p>
+    <p style="margin:0 0 24px;font-size:14px;line-height:1.5;white-space:pre-wrap;">${escapeHtml(incident.description || '')}</p>
   `);
 
-  return sendEmail(env, { to: staff, subject, text, html });
+  const results = { admin: await sendEmail(env, { to: staffInbox, subject, text, html }) };
+  if (assigneeEmail) {
+    results.assignee = await sendEmail(env, {
+      to: assigneeEmail,
+      subject: `You have been assigned job ${ref}`,
+      text,
+      html
+    });
+  }
+  return results;
 }
