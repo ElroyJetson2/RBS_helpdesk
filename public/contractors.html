@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Contractors – RBS Helpdesk</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#0B1C2C'},accent:{DEFAULT:'#1C9AD6'},cream:'#F3F6F9'}}}}</script>
+<style>body{font-family:system-ui,sans-serif}</style>
+</head>
+<body class="bg-cream min-h-screen text-navy">
+<header class="bg-navy text-white sticky top-0 z-20">
+<div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2 flex-wrap">
+<a href="/" class="flex items-center gap-3 hover:opacity-90">
+<img src="https://static.wixstatic.com/media/01636e_59a9c7e5033445a6a91de7079e496a0e~mv2.png/v1/fill/w_388,h_86,al_c,q_85,usm_0.66_1.00_0.01,enc_png/RBS%20Logo%20White%20Horizontal.png" class="h-8 max-w-[130px] object-contain" alt="RBS"/>
+<span class="font-semibold tracking-[0.28em] text-xs border-l border-white/30 pl-3">HELPDESK</span>
+</a>
+<nav class="flex items-center gap-3 text-sm">
+<a href="/admin.html" class="text-white/70 hover:text-accent">Dashboard</a>
+<span class="text-accent font-medium">Contractors</span>
+<button onclick="logout()" class="text-white/60 text-xs">Logout</button>
+</nav>
+</div></header>
+
+<main class="max-w-5xl mx-auto px-4 py-6">
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+<div><h1 class="text-2xl font-semibold">Contractors</h1>
+<p class="text-sm text-navy/50">Onboard suppliers with business, licence, insurance and payment details</p></div>
+<button onclick="openForm()" class="bg-accent text-white px-4 py-2 rounded-lg text-sm">+ Add contractor</button>
+</div>
+<div id="list" class="space-y-2"></div>
+<p id="empty" class="hidden text-center text-navy/40 py-16">No contractors yet</p>
+</main>
+
+<div id="modal" class="hidden fixed inset-0 bg-black/40 z-50 overflow-y-auto">
+<div class="min-h-full flex items-start justify-center p-4 py-8">
+<div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6">
+<div class="flex justify-between items-center mb-4">
+<h2 id="formTitle" class="text-xl font-semibold">Add contractor</h2>
+<button onclick="closeForm()" class="text-2xl text-navy/40">&times;</button>
+</div>
+<form id="form" class="space-y-4">
+<input type="hidden" id="cId"/>
+<section>
+<p class="text-xs font-semibold uppercase tracking-wider text-navy/40 mb-2">Business</p>
+<div class="grid sm:grid-cols-2 gap-3">
+<div class="sm:col-span-2"><label class="text-xs text-navy/50">Business name *</label>
+<input id="business_name" required class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+<div><label class="text-xs text-navy/50">Trading name</label>
+<input id="trading_name" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+<div><label class="text-xs text-navy/50">ABN</label>
+<input id="abn" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="XX XXX XXX XXX"/></div>
+<div class="sm:col-span-2"><label class="text-xs text-navy/50">Business address</label>
+<input id="address" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+</div></section>
+
+<section>
+<p class="text-xs font-semibold uppercase tracking-wider text-navy/40 mb-2">Contact</p>
+<div class="grid sm:grid-cols-2 gap-3">
+<div><label class="text-xs text-navy/50">Contact name *</label>
+<input id="contact_name" required class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+<div><label class="text-xs text-navy/50">Phone</label>
+<input id="phone" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+<div class="sm:col-span-2"><label class="text-xs text-navy/50">Email</label>
+<input id="email" type="email" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+</div></section>
+
+<section>
+<p class="text-xs font-semibold uppercase tracking-wider text-navy/40 mb-2">Licence</p>
+<div class="grid sm:grid-cols-3 gap-3">
+<div><label class="text-xs text-navy/50">Licence type</label>
+<input id="licence_type" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="e.g. QBCC"/></div>
+<div><label class="text-xs text-navy/50">Licence number</label>
+<input id="licence_number" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+<div><label class="text-xs text-navy/50">Expiry</label>
+<input id="licence_expiry" type="date" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+</div></section>
+
+<section>
+<p class="text-xs font-semibold uppercase tracking-wider text-navy/40 mb-2">Insurance</p>
+<div class="grid sm:grid-cols-3 gap-3">
+<div><label class="text-xs text-navy/50">Provider</label>
+<input id="insurance_provider" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+<div><label class="text-xs text-navy/50">Policy number</label>
+<input id="insurance_policy" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+<div><label class="text-xs text-navy/50">Expiry</label>
+<input id="insurance_expiry" type="date" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+</div></section>
+
+<section>
+<p class="text-xs font-semibold uppercase tracking-wider text-navy/40 mb-2">Bank details (for payment)</p>
+<div class="grid sm:grid-cols-3 gap-3">
+<div><label class="text-xs text-navy/50">Account name</label>
+<input id="bank_account_name" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+<div><label class="text-xs text-navy/50">BSB</label>
+<input id="bank_bsb" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="000-000"/></div>
+<div><label class="text-xs text-navy/50">Account number</label>
+<input id="bank_account_number" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+</div></section>
+
+<section>
+<p class="text-xs font-semibold uppercase tracking-wider text-navy/40 mb-2">Documents (licence, insurance, etc.)</p>
+<input type="file" id="docs" multiple accept="image/*,.pdf" class="w-full text-sm"/>
+<p class="text-xs text-navy/40 mt-1">PDF or images. Max ~5 files, keep each under 2MB.</p>
+<div id="docPreview" class="text-xs text-navy/50 mt-1"></div>
+</section>
+
+<section>
+<p class="text-xs font-semibold uppercase tracking-wider text-navy/40 mb-2">Staff login (optional)</p>
+<label class="flex items-center gap-2 text-sm mb-2">
+<input type="checkbox" id="create_login"/> Create login so they can see assigned jobs
+</label>
+<div class="grid sm:grid-cols-2 gap-3">
+<div><label class="text-xs text-navy/50">Username</label>
+<input id="login_username" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+<div><label class="text-xs text-navy/50">Password</label>
+<input id="login_password" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+</div>
+</section>
+
+<div><label class="text-xs text-navy/50">Notes</label>
+<textarea id="notes" rows="2" class="w-full border rounded-lg px-3 py-2 text-sm"></textarea></div>
+
+<div id="formError" class="hidden text-red-700 text-sm"></div>
+<div class="flex gap-3 pt-2">
+<button type="button" onclick="closeForm()" class="flex-1 border py-2.5 rounded-lg text-sm">Cancel</button>
+<button type="submit" class="flex-1 bg-accent text-white py-2.5 rounded-lg text-sm font-medium">Save contractor</button>
+</div>
+</form>
+</div></div></div>
+
+<script>
+let token = localStorage.getItem('rbs_token')||'';
+let pendingDocs = [];
+if(!token){ location.href='/admin.html'; }
+
+function logout(){ localStorage.clear(); location.href='/admin.html'; }
+function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function loadList(){
+  const list=document.getElementById('list');
+  list.innerHTML='<p class="text-center text-navy/40 py-10">Loading…</p>';
+  try{
+    const res=await fetch('/api/admin/contractors',{headers:{Authorization:'Bearer '+token}});
+    if(res.status===401){logout();return}
+    const data=await res.json();
+    if(!data.success)throw new Error(data.error||'Failed');
+    const rows=data.contractors||[];
+    list.innerHTML='';
+    document.getElementById('empty').classList.toggle('hidden', rows.length>0);
+    rows.forEach(c=>{
+      const d=document.createElement('div');
+      d.className='bg-white rounded-xl border p-4 flex justify-between gap-3';
+      d.innerHTML=`<div>
+        <p class="font-semibold">${esc(c.business_name)} ${c.active?'':'<span class="text-xs text-red-600">(inactive)</span>'}</p>
+        <p class="text-sm text-navy/50">${esc(c.contact_name||'')}${c.phone?' · '+esc(c.phone):''}${c.email?' · '+esc(c.email):''}</p>
+        <p class="text-xs text-navy/40 mt-1">${c.licence_type?esc(c.licence_type)+' '+esc(c.licence_number||''):'No licence on file'}${c.staff_username?' · login: '+esc(c.staff_username):''}</p>
+      </div>
+      <button class="text-xs text-red-600 hover:underline" onclick="removeC(${c.id},'${esc(c.business_name)}')">Remove</button>`;
+      list.appendChild(d);
+    });
+  }catch(e){list.innerHTML='<p class="text-red-600 text-center py-10">'+esc(e.message)+'</p>'}
+}
+
+function openForm(){
+  form.reset(); cId.value=''; pendingDocs=[];
+  docPreview.textContent='';
+  formError.classList.add('hidden');
+  formTitle.textContent='Add contractor';
+  modal.classList.remove('hidden');
+}
+function closeForm(){ modal.classList.add('hidden'); }
+
+docs.onchange=async ()=>{
+  pendingDocs=[];
+  const files=[...docs.files].slice(0,5);
+  for(const f of files){
+    if(f.size>2.5*1024*1024){ alert(f.name+' is too large (max 2MB)'); continue; }
+    const data_url=await readFile(f);
+    pendingDocs.push({ doc_type: guessType(f.name), file_name: f.name, data_url });
+  }
+  docPreview.textContent=pendingDocs.length? pendingDocs.map(d=>d.file_name).join(', ') : '';
+};
+
+function readFile(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result);
+    r.onerror=rej;
+    r.readAsDataURL(file);
+  });
+}
+function guessType(name){
+  const n=(name||'').toLowerCase();
+  if(n.includes('insur')) return 'insurance';
+  if(n.includes('licen')||n.includes('qbcc')) return 'licence';
+  return 'other';
+}
+
+form.onsubmit=async e=>{
+  e.preventDefault();
+  formError.classList.add('hidden');
+  const body={
+    business_name: business_name.value.trim(),
+    trading_name: trading_name.value.trim(),
+    abn: abn.value.trim(),
+    address: address.value.trim(),
+    contact_name: contact_name.value.trim(),
+    phone: phone.value.trim(),
+    email: email.value.trim(),
+    licence_type: licence_type.value.trim(),
+    licence_number: licence_number.value.trim(),
+    licence_expiry: licence_expiry.value,
+    insurance_provider: insurance_provider.value.trim(),
+    insurance_policy: insurance_policy.value.trim(),
+    insurance_expiry: insurance_expiry.value,
+    bank_account_name: bank_account_name.value.trim(),
+    bank_bsb: bank_bsb.value.trim(),
+    bank_account_number: bank_account_number.value.trim(),
+    notes: notes.value.trim(),
+    create_login: create_login.checked,
+    login_username: login_username.value.trim(),
+    login_password: login_password.value,
+    documents: pendingDocs
+  };
+  try{
+    const res=await fetch('/api/admin/contractors',{
+      method:'POST',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+      body:JSON.stringify(body)
+    });
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||data.details||'Failed');
+    if(data.warning) alert(data.warning);
+    closeForm(); loadList();
+  }catch(ex){ formError.textContent=ex.message; formError.classList.remove('hidden'); }
+};
+
+async function removeC(id,name){
+  if(!confirm('Remove '+name+'?')) return;
+  const res=await fetch('/api/admin/contractors?id='+id,{method:'DELETE',headers:{Authorization:'Bearer '+token}});
+  const data=await res.json();
+  if(!res.ok) alert(data.error||'Failed');
+  else loadList();
+}
+
+loadList();
+</script>
+</body>
+</html>
