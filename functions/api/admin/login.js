@@ -1,6 +1,7 @@
 /**
  * POST /api/admin/login
  * Returns token + role + display_name
+ * Tolerates DBs that have not yet been migrated (missing role/email columns).
  */
 export async function onRequestPost(context) {
   const { request, env } = context;
@@ -12,9 +13,32 @@ export async function onRequestPost(context) {
       return json({ error: 'Username and password required' }, 400);
     }
 
-    const staff = await env.DB.prepare(
-      'SELECT id, username, display_name, password_hash, role, email FROM staff WHERE username = ?'
-    ).bind(username.trim()).first();
+    const user = (username || '').trim();
+    let staff = null;
+
+    // Prefer full row (post-migration)
+    try {
+      staff = await env.DB.prepare(
+        'SELECT id, username, display_name, password_hash, role, email FROM staff WHERE username = ?'
+      ).bind(user).first();
+    } catch (e) {
+      staff = null;
+    }
+
+    if (!staff) {
+      try {
+        staff = await env.DB.prepare(
+          'SELECT id, username, display_name, password_hash FROM staff WHERE username = ?'
+        ).bind(user).first();
+        if (staff) {
+          staff.role = 'admin';
+          staff.email = null;
+        }
+      } catch (e2) {
+        console.error('Login query failed', e2);
+        return json({ error: 'Login failed', details: String(e2.message || e2) }, 500);
+      }
+    }
 
     if (!staff || staff.password_hash !== password) {
       return json({ error: 'Invalid credentials' }, 401);
