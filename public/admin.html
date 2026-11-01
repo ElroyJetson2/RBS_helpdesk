@@ -1,1 +1,24 @@
-PLACEHOLDER
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – RBS Helpdesk</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#0B1C2C',light:'#143049'},accent:{DEFAULT:'#1C9AD6'},cream:'#F3F6F9'},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
+  <style>
+    body{font-family:Inter,system-ui,sans-serif}
+    .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .kpi{transition:transform .15s ease}
+    .kpi:hover{transform:translateY(-1px)}
+    #detailPanel{transition:transform .25s ease}
+    .status-open{background:#d1fae5;color:#065f46}
+    .status-closed{background:#fee2e2;color:#991b1b}
+  </style>
+</head>
+<body class="bg-cream min-h-screen text-navy">
+<p style="padding:2rem;font-family:sans-serif">Admin dashboard is being restored. Please wait 1 minute and refresh. If this persists, contact support.</p>
+<script>setTimeout(function(){location.reload()},5000)</script>
+</body>
+</html>
