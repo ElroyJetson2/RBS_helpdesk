@@ -108,6 +108,7 @@
 <div><p class="text-[10px] uppercase text-navy/40">Contact</p><p id="detailContact" class="font-medium break-all"></p></div>
 </div>
 <div><p class="text-[10px] uppercase text-navy/40">Description</p><p id="detailDesc" class="text-sm text-navy/80"></p></div>
+<div id="detailPhotosBox" class="hidden"><p class="text-[10px] uppercase text-navy/40 mb-2">Photos</p><div id="detailPhotoGrid" class="flex flex-wrap gap-2"></div></div>
 <div><p class="text-[10px] uppercase text-navy/40 mb-2">Timeline</p><ol id="detailTimeline" class="relative border-l ml-2 space-y-3 pl-4"></ol></div>
 <div class="border-t pt-4">
 <h3 class="font-semibold mb-3">Update job</h3>
@@ -243,6 +244,8 @@ function fillAssignees(cur){
 async function openDetail(ref){
  detailOverlay.classList.remove('hidden');detailPanel.classList.remove('translate-x-full');
  detailRef.textContent=ref;detailTimeline.innerHTML='<li class="text-sm text-navy/40">Loading…</li>';
+ const pb=document.getElementById('detailPhotosBox');const pg=document.getElementById('detailPhotoGrid');
+ if(pb)pb.classList.add('hidden');if(pg)pg.innerHTML='';
  updError.classList.add('hidden');updNote.value='';updRef.value=ref;
  try{
   const res=await fetch('/api/track?ref='+encodeURIComponent(ref));
@@ -256,6 +259,25 @@ async function openDetail(ref){
   detailReporter.textContent=i.reporter_name||'—';
   detailContact.textContent=c.reporter_contact||'—';
   detailDesc.textContent=i.description||'';
+  const photoBox=document.getElementById('detailPhotosBox');
+  const photoGrid=document.getElementById('detailPhotoGrid');
+  if(photoBox&&photoGrid){
+    photoGrid.innerHTML='';
+    const photos=data.photos||[];
+    if(photos.length){
+      photoBox.classList.remove('hidden');
+      photos.forEach(p=>{
+        const img=document.createElement('img');
+        img.src=p.data_url;
+        img.alt='Photo';
+        img.className='w-20 h-20 object-cover rounded-lg border border-navy/10 cursor-pointer';
+        img.onclick=()=>window.open(p.data_url,'_blank');
+        photoGrid.appendChild(img);
+      });
+    } else {
+      photoBox.classList.add('hidden');
+    }
+  }
   updStatus.value=i.status||'open';
   fillAssignees(c.assigned_to||i.assigned_to||'');
   detailTimeline.innerHTML='';
