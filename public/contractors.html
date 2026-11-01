@@ -48,7 +48,12 @@
 <div><label class="text-xs text-navy/50">Trading name</label>
 <input id="trading_name" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
 <div><label class="text-xs text-navy/50">ABN</label>
-<input id="abn" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="XX XXX XXX XXX"/></div>
+<div class="flex gap-2">
+<input id="abn" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="11 digits" maxlength="14"/>
+<button type="button" id="abnLookupBtn" class="shrink-0 bg-navy text-white px-3 py-2 rounded-lg text-xs">Lookup</button>
+</div>
+<p id="abnStatus" class="text-xs text-navy/40 mt-1">Enter ABN and click Lookup to fill company name from ABR</p>
+</div>
 <div class="sm:col-span-2"><label class="text-xs text-navy/50">Business address</label>
 <input id="address" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
 </div></section>
@@ -58,10 +63,10 @@
 <div class="grid sm:grid-cols-2 gap-3">
 <div><label class="text-xs text-navy/50">Contact name *</label>
 <input id="contact_name" required class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
-<div><label class="text-xs text-navy/50">Phone</label>
-<input id="phone" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
-<div class="sm:col-span-2"><label class="text-xs text-navy/50">Email</label>
-<input id="email" type="email" class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+<div><label class="text-xs text-navy/50">Phone *</label>
+<input id="phone" required class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
+<div class="sm:col-span-2"><label class="text-xs text-navy/50">Email *</label>
+<input id="email" type="email" required class="w-full border rounded-lg px-3 py-2 text-sm"/></div>
 </div></section>
 
 <section>
@@ -136,6 +141,38 @@ if(!token){ location.href='/admin.html'; }
 function logout(){ localStorage.clear(); location.href='/admin.html'; }
 function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+abnLookupBtn.onclick = lookupAbn;
+abn.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); lookupAbn(); } });
+
+async function lookupAbn() {
+  const raw = abn.value.replace(/\D/g, '');
+  abnStatus.textContent = 'Looking up…';
+  abnStatus.className = 'text-xs text-navy/50 mt-1';
+  if (raw.length !== 11) {
+    abnStatus.textContent = 'ABN must be 11 digits';
+    abnStatus.className = 'text-xs text-red-600 mt-1';
+    return;
+  }
+  try {
+    const res = await fetch('/api/admin/abn?abn=' + encodeURIComponent(raw), {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || data.hint || 'Lookup failed');
+    if (data.entity_name) {
+      business_name.value = data.entity_name;
+      abnStatus.textContent = 'Found: ' + data.entity_name + (data.entity_type ? ' (' + data.entity_type + ')' : '');
+      abnStatus.className = 'text-xs text-emerald-700 mt-1';
+    } else {
+      abnStatus.textContent = 'No entity name returned for this ABN';
+      abnStatus.className = 'text-xs text-amber-700 mt-1';
+    }
+  } catch (ex) {
+    abnStatus.textContent = ex.message;
+    abnStatus.className = 'text-xs text-red-600 mt-1';
+  }
+}
+
 async function loadList(){
   const list=document.getElementById('list');
   list.innerHTML='<p class="text-center text-navy/40 py-10">Loading…</p>';
@@ -165,6 +202,8 @@ function openForm(){
   form.reset(); cId.value=''; pendingDocs=[];
   docPreview.textContent='';
   formError.classList.add('hidden');
+  abnStatus.textContent='Enter ABN and click Lookup to fill company name from ABR';
+  abnStatus.className='text-xs text-navy/40 mt-1';
   formTitle.textContent='Add contractor';
   modal.classList.remove('hidden');
 }
@@ -199,6 +238,16 @@ function guessType(name){
 form.onsubmit=async e=>{
   e.preventDefault();
   formError.classList.add('hidden');
+  if(!contact_name.value.trim()||!phone.value.trim()||!email.value.trim()){
+    formError.textContent='Contact name, phone and email are required';
+    formError.classList.remove('hidden');
+    return;
+  }
+  if(!/[^\s@]+@[^\s@]+\.[^\s@]+/.test(email.value.trim())){
+    formError.textContent='Please enter a valid email address';
+    formError.classList.remove('hidden');
+    return;
+  }
   const body={
     business_name: business_name.value.trim(),
     trading_name: trading_name.value.trim(),
