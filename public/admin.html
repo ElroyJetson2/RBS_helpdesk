@@ -1,24 +1,297 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard – RBS Helpdesk</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script>tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#0B1C2C',light:'#143049'},accent:{DEFAULT:'#1C9AD6'},cream:'#F3F6F9'},fontFamily:{sans:['Inter','system-ui','sans-serif']}}}}</script>
-  <style>
-    body{font-family:Inter,system-ui,sans-serif}
-    .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-    .kpi{transition:transform .15s ease}
-    .kpi:hover{transform:translateY(-1px)}
-    #detailPanel{transition:transform .25s ease}
-    .status-open{background:#d1fae5;color:#065f46}
-    .status-closed{background:#fee2e2;color:#991b1b}
-  </style>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dashboard – RBS Helpdesk</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{navy:{DEFAULT:'#0B1C2C'},accent:{DEFAULT:'#1C9AD6'},cream:'#F3F6F9'}}}}</script>
+<style>body{font-family:system-ui,sans-serif}#detailPanel{transition:transform .25s ease}
+.st-open{background:#dbeafe;color:#1e40af}.st-assigned{background:#fef3c7;color:#92400e}
+.st-in_progress{background:#e0e7ff;color:#3730a3}.st-customer_sign_off{background:#fce7f3;color:#9d174d}
+.st-closed{background:#fee2e2;color:#991b1b}</style>
 </head>
 <body class="bg-cream min-h-screen text-navy">
-<p style="padding:2rem;font-family:sans-serif">Admin dashboard is being restored. Please wait 1 minute and refresh. If this persists, contact support.</p>
-<script>setTimeout(function(){location.reload()},5000)</script>
+<div id="loginView" class="min-h-screen flex flex-col">
+<header class="bg-navy text-white py-4"><div class="max-w-sm mx-auto px-4 flex items-center gap-3">
+<img src="https://static.wixstatic.com/media/01636e_59a9c7e5033445a6a91de7079e496a0e~mv2.png/v1/fill/w_388,h_86,al_c,q_85,usm_0.66_1.00_0.01,enc_png/RBS%20Logo%20White%20Horizontal.png" class="h-9 max-w-[160px] object-contain" alt="RBS"/>
+<span class="font-semibold tracking-[0.28em] text-xs border-l border-white/30 pl-3">HELPDESK</span></div></header>
+<div class="flex-1 flex items-center justify-center px-4 py-12">
+<div class="bg-white rounded-2xl border border-navy/5 p-8 w-full max-w-sm shadow-sm">
+<h1 class="text-2xl text-center mb-6 font-semibold">Staff Login</h1>
+<form id="loginForm" class="space-y-4">
+<div><label class="block text-xs uppercase tracking-wider text-navy/50 mb-1">Username</label>
+<input id="username" value="admin" required class="w-full border border-navy/15 rounded-lg px-3 py-3"/></div>
+<div><label class="block text-xs uppercase tracking-wider text-navy/50 mb-1">Password</label>
+<input id="password" type="password" required class="w-full border border-navy/15 rounded-lg px-3 py-3"/></div>
+<div id="loginError" class="hidden text-red-700 text-sm"></div>
+<button class="w-full bg-accent text-white py-3 rounded-lg font-medium">Sign in</button>
+</form>
+<p class="text-center text-xs text-navy/40 mt-5"><a href="/" class="text-accent">← Back</a></p>
+</div></div></div>
+
+<div id="dashView" class="hidden">
+<header class="bg-navy text-white sticky top-0 z-20">
+<div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-2 flex-wrap">
+<div class="flex items-center gap-3">
+<img src="https://static.wixstatic.com/media/01636e_59a9c7e5033445a6a91de7079e496a0e~mv2.png/v1/fill/w_388,h_86,al_c,q_85,usm_0.66_1.00_0.01,enc_png/RBS%20Logo%20White%20Horizontal.png" class="h-8 max-w-[130px] object-contain" alt="RBS"/>
+<span class="font-semibold tracking-[0.28em] text-xs border-l border-white/30 pl-3">HELPDESK</span></div>
+<nav class="flex items-center gap-1 text-sm flex-wrap">
+<button onclick="showSection('dashboard')" id="navDashboard" class="px-2.5 py-1.5 rounded text-accent font-medium">Dashboard</button>
+<button onclick="showSection('incidents')" id="navIncidents" class="px-2.5 py-1.5 rounded text-white/70 hover:text-accent">Incidents</button>
+<button onclick="showSection('reports')" id="navReports" class="px-2.5 py-1.5 rounded text-white/70 hover:text-accent">Reports</button>
+<span id="userName" class="text-white/50 text-xs ml-2"></span>
+<span id="roleBadge" class="text-[10px] uppercase px-1.5 py-0.5 rounded bg-white/10"></span>
+<button onclick="logout()" class="text-white/60 text-xs ml-1">Logout</button>
+</nav></div></header>
+
+<main id="sectionDashboard" class="max-w-6xl mx-auto px-4 py-6">
+<div class="flex justify-between mb-6"><div><h1 class="text-2xl font-semibold">Dashboard</h1><p class="text-sm text-navy/50" id="dashSub">Overview</p></div>
+<button onclick="loadDashboard()" class="text-sm text-accent">Refresh</button></div>
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+<div class="bg-white rounded-xl border p-4"><p class="text-[10px] uppercase text-navy/40">Open</p><p id="kpiOpen" class="text-2xl font-semibold">—</p></div>
+<div class="bg-white rounded-xl border p-4"><p class="text-[10px] uppercase text-navy/40">Assigned</p><p id="kpiAssigned" class="text-2xl font-semibold">—</p></div>
+<div class="bg-white rounded-xl border p-4"><p class="text-[10px] uppercase text-navy/40">In Progress</p><p id="kpiInProgress" class="text-2xl font-semibold">—</p></div>
+<div class="bg-white rounded-xl border p-4"><p class="text-[10px] uppercase text-navy/40">Sign Off</p><p id="kpiSignOff" class="text-2xl font-semibold">—</p></div>
+<div class="bg-white rounded-xl border p-4"><p class="text-[10px] uppercase text-navy/40">Closed</p><p id="kpiClosed" class="text-2xl font-semibold">—</p></div>
+<div class="bg-white rounded-xl border p-4"><p class="text-[10px] uppercase text-navy/40">Today</p><p id="kpiToday" class="text-2xl font-semibold text-accent">—</p></div>
+</div>
+<div class="bg-white rounded-xl border shadow-sm"><div class="px-5 py-3 border-b"><h2 class="font-semibold">Recent jobs</h2></div>
+<div id="recentAll" class="divide-y max-h-96 overflow-y-auto"></div></div>
+</main>
+
+<main id="sectionIncidents" class="hidden max-w-6xl mx-auto px-4 py-6">
+<div class="flex justify-between mb-5"><div><h1 class="text-2xl font-semibold">Incidents</h1></div>
+<button onclick="loadIncidents()" class="bg-accent text-white px-4 py-2 rounded-lg text-sm">Refresh</button></div>
+<div class="bg-white rounded-xl border p-4 mb-5 grid grid-cols-1 sm:grid-cols-4 gap-3">
+<div class="sm:col-span-2"><label class="text-[10px] uppercase text-navy/40">Search</label>
+<input id="filterQ" class="w-full border rounded-lg px-3 py-2 text-sm" placeholder="Ref, name, address…"/></div>
+<div><label class="text-[10px] uppercase text-navy/40">Status</label>
+<select id="filterStatus" class="w-full border rounded-lg px-3 py-2 text-sm">
+<option value="">All</option>
+<option value="open">Open</option>
+<option value="assigned">Assigned</option>
+<option value="in_progress">In Progress</option>
+<option value="customer_sign_off">Customer Sign Off</option>
+<option value="closed">Closed</option>
+</select></div>
+<div class="flex items-end gap-2">
+<button onclick="loadIncidents()" class="flex-1 bg-navy text-white py-2 rounded-lg text-sm">Apply</button>
+<button onclick="clearFilters()" class="text-sm text-navy/50">Clear</button>
+</div></div>
+<div id="incidentList" class="space-y-2"></div>
+<p id="emptyMsg" class="hidden text-center text-navy/40 py-16">No incidents</p>
+</main>
+
+<main id="sectionReports" class="hidden max-w-6xl mx-auto px-4 py-6">
+<h1 class="text-2xl font-semibold mb-4">Reports</h1>
+<div class="bg-white rounded-xl border p-6 max-w-md">
+<button onclick="runExport()" class="w-full bg-navy text-white py-2.5 rounded-lg text-sm">Download CSV</button>
+<p id="exportMsg" class="text-xs text-navy/40 mt-3 text-center"></p>
+</div></main>
+</div>
+
+<div id="detailOverlay" class="hidden fixed inset-0 bg-black/30 z-30" onclick="closeDetail()"></div>
+<aside id="detailPanel" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-40 transform translate-x-full overflow-y-auto">
+<div class="sticky top-0 bg-white border-b px-5 py-4 flex justify-between">
+<div><p class="text-[10px] uppercase text-navy/40">Incident</p><p id="detailRef" class="font-mono font-semibold text-lg"></p></div>
+<button onclick="closeDetail()" class="text-2xl text-navy/50">&times;</button></div>
+<div class="p-5 space-y-4">
+<div class="flex gap-2 items-center flex-wrap"><span id="detailStatus" class="px-2.5 py-0.5 rounded-full text-xs font-medium"></span>
+<span id="detailAssignee" class="text-xs text-navy/50"></span></div>
+<div><p class="text-[10px] uppercase text-navy/40">Property</p><p id="detailDev" class="font-medium"></p></div>
+<div class="grid grid-cols-2 gap-3 text-sm">
+<div><p class="text-[10px] uppercase text-navy/40">Reporter</p><p id="detailReporter" class="font-medium"></p></div>
+<div><p class="text-[10px] uppercase text-navy/40">Contact</p><p id="detailContact" class="font-medium break-all"></p></div>
+</div>
+<div><p class="text-[10px] uppercase text-navy/40">Description</p><p id="detailDesc" class="text-sm text-navy/80"></p></div>
+<div><p class="text-[10px] uppercase text-navy/40 mb-2">Timeline</p><ol id="detailTimeline" class="relative border-l ml-2 space-y-3 pl-4"></ol></div>
+<div class="border-t pt-4">
+<h3 class="font-semibold mb-3">Update job</h3>
+<form id="updateForm" class="space-y-3">
+<input type="hidden" id="updRef"/>
+<div><label class="text-xs text-navy/50">Status</label>
+<select id="updStatus" class="w-full border rounded-lg px-3 py-2.5 text-sm">
+<option value="open">Open</option>
+<option value="assigned">Assigned</option>
+<option value="in_progress">In Progress</option>
+<option value="customer_sign_off">Customer Sign Off</option>
+<option value="closed">Closed</option>
+</select></div>
+<div><label class="text-xs text-navy/50">Assigned To</label>
+<select id="updAssignee" class="w-full border rounded-lg px-3 py-2.5 text-sm">
+<option value="">— Unassigned —</option>
+<option value="Captain">Captain</option>
+<option value="Cameron">Cameron</option>
+<option value="Steve W">Steve W</option>
+</select></div>
+<div><label class="text-xs text-navy/50">Note</label>
+<textarea id="updNote" rows="3" class="w-full border rounded-lg px-3 py-2.5 text-sm"></textarea></div>
+<div id="updError" class="hidden text-red-700 text-sm"></div>
+<button class="w-full bg-accent text-white py-2.5 rounded-lg font-medium">Save update</button>
+</form></div>
+</div></aside>
+
+<script>
+const LABELS={open:'Open',assigned:'Assigned',in_progress:'In Progress',customer_sign_off:'Customer Sign Off',closed:'Closed'};
+let token=localStorage.getItem('rbs_token')||'';
+let displayName=localStorage.getItem('rbs_name')||'';
+let myRole=localStorage.getItem('rbs_role')||'admin';
+let cache=[], assignees=[];
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function fmt(iso){if(!iso)return '—';const d=new Date(iso.includes('T')?iso:iso+'Z');return d.toLocaleString('en-AU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}
+function stClass(s){return 'st-'+(s||'open')}
+
+if(token)showDash();
+
+document.getElementById('loginForm').onsubmit=async e=>{
+ e.preventDefault();
+ const err=document.getElementById('loginError');err.classList.add('hidden');
+ try{
+  const res=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({username:username.value,password:password.value})});
+  const data=await res.json();
+  if(!res.ok)throw new Error(data.error||'Login failed');
+  token=data.token;displayName=data.display_name;myRole=data.role||'admin';
+  localStorage.setItem('rbs_token',token);localStorage.setItem('rbs_name',displayName);localStorage.setItem('rbs_role',myRole);
+  showDash();
+ }catch(ex){err.textContent=ex.message;err.classList.remove('hidden')}
+};
+
+function logout(){token='';['rbs_token','rbs_name','rbs_role'].forEach(k=>localStorage.removeItem(k));
+ loginView.classList.remove('hidden');dashView.classList.add('hidden');closeDetail()}
+function showDash(){loginView.classList.add('hidden');dashView.classList.remove('hidden');
+ userName.textContent=displayName;roleBadge.textContent=myRole;dashSub.textContent=myRole==='contractor'?'Your assigned jobs':'All jobs';
+ showSection('dashboard')}
+function showSection(n){
+ ['dashboard','incidents','reports'].forEach(s=>{
+  const el=document.getElementById('section'+s[0].toUpperCase()+s.slice(1));
+  if(el)el.classList.toggle('hidden',s!==n);
+  const nav=document.getElementById('nav'+s[0].toUpperCase()+s.slice(1));
+  if(nav)nav.className='px-2.5 py-1.5 rounded '+(s===n?'text-accent font-medium':'text-white/70 hover:text-accent');
+ });
+ if(n==='dashboard')loadDashboard();
+ if(n==='incidents')loadIncidents();
+}
+
+async function loadDashboard(){
+ try{
+  const res=await fetch('/api/admin/incidents?stats=1&limit=20',{headers:{Authorization:'Bearer '+token}});
+  if(res.status===401){logout();return}
+  const data=await res.json();
+  const s=data.stats||{};
+  kpiOpen.textContent=s.open??'—';kpiAssigned.textContent=s.assigned??'—';
+  kpiInProgress.textContent=s.in_progress??'—';kpiSignOff.textContent=s.customer_sign_off??'—';
+  kpiClosed.textContent=s.closed??'—';kpiToday.textContent=s.today??'—';
+  if(data.assignees)assignees=data.assignees;
+  const box=recentAll;box.innerHTML='';
+  (data.incidents||[]).forEach(i=>{
+   const b=document.createElement('button');
+   b.className='w-full text-left px-5 py-3 hover:bg-cream/80';
+   b.innerHTML=`<div class="flex justify-between"><span class="font-mono text-sm font-medium">${esc(i.reference)}</span>
+    <span class="px-1.5 py-0.5 rounded text-[10px] font-medium ${stClass(i.status)}">${LABELS[i.status]||i.status}</span></div>
+    <p class="text-sm text-navy/70 truncate">${esc(i.development_name||'')}${i.assigned_to?' · → '+esc(i.assigned_to):''}</p>`;
+   b.onclick=()=>openDetail(i.reference);box.appendChild(b);
+  });
+  if(!(data.incidents||[]).length)box.innerHTML='<p class="p-5 text-sm text-navy/40">No jobs</p>';
+ }catch(e){console.error(e)}
+}
+
+function clearFilters(){filterQ.value='';filterStatus.value='';loadIncidents()}
+
+async function loadIncidents(){
+ incidentList.innerHTML='<p class="text-center text-navy/40 py-10">Loading…</p>';
+ emptyMsg.classList.add('hidden');
+ const p=new URLSearchParams({limit:'200'});
+ if(filterQ.value.trim())p.set('q',filterQ.value.trim());
+ if(filterStatus.value)p.set('status',filterStatus.value);
+ try{
+  const res=await fetch('/api/admin/incidents?'+p,{headers:{Authorization:'Bearer '+token}});
+  if(res.status===401){logout();return}
+  const data=await res.json();
+  if(!data.success)throw new Error(data.error||'Failed');
+  if(data.assignees)assignees=data.assignees;
+  cache=data.incidents||[];
+  incidentList.innerHTML='';
+  if(!cache.length){emptyMsg.classList.remove('hidden');return}
+  cache.forEach(i=>{
+   const c=document.createElement('div');
+   c.className='bg-white rounded-xl border p-4 cursor-pointer hover:border-accent/40';
+   c.onclick=()=>openDetail(i.reference);
+   c.innerHTML=`<div class="flex justify-between gap-2"><div><p class="font-mono font-semibold">${esc(i.reference)}</p>
+    <p class="text-sm text-navy/50">${esc(i.development_name||'')}</p></div>
+    <span class="px-2.5 py-0.5 rounded-full text-xs font-medium ${stClass(i.status)}">${LABELS[i.status]||i.status}</span></div>
+    <p class="text-sm mt-2 line-clamp-2">${esc(i.description||'')}</p>
+    <p class="text-xs text-navy/40 mt-2">${i.assigned_to?'→ '+esc(i.assigned_to)+' · ':''}${fmt(i.created_at)}</p>`;
+   incidentList.appendChild(c);
+  });
+ }catch(e){incidentList.innerHTML='<p class="text-red-600 text-center py-10">'+esc(e.message)+'</p>'}
+}
+
+function fillAssignees(cur){
+ const sel=updAssignee;sel.innerHTML='<option value="">— Unassigned —</option>';
+ const list=assignees.length?assignees:[{display_name:'Captain'},{display_name:'Cameron'},{display_name:'Steve W'}];
+ list.forEach(a=>{
+  const n=a.display_name||a.username;const o=document.createElement('option');
+  o.value=n;o.textContent=n;if(cur&&(cur===n||cur===a.username))o.selected=true;sel.appendChild(o);
+ });
+}
+
+async function openDetail(ref){
+ detailOverlay.classList.remove('hidden');detailPanel.classList.remove('translate-x-full');
+ detailRef.textContent=ref;detailTimeline.innerHTML='<li class="text-sm text-navy/40">Loading…</li>';
+ updError.classList.add('hidden');updNote.value='';updRef.value=ref;
+ try{
+  const res=await fetch('/api/track?ref='+encodeURIComponent(ref));
+  const data=await res.json();
+  if(!data.success)throw new Error(data.error||'Not found');
+  const i=data.incident;const c=cache.find(x=>x.reference===ref)||{};
+  detailStatus.className='px-2.5 py-0.5 rounded-full text-xs font-medium '+stClass(i.status);
+  detailStatus.textContent=LABELS[i.status]||i.status;
+  detailAssignee.textContent=(c.assigned_to||i.assigned_to)?('→ '+(c.assigned_to||i.assigned_to)):'';
+  detailDev.textContent=i.development_name||'—';
+  detailReporter.textContent=i.reporter_name||'—';
+  detailContact.textContent=c.reporter_contact||'—';
+  detailDesc.textContent=i.description||'';
+  updStatus.value=i.status||'open';
+  fillAssignees(c.assigned_to||i.assigned_to||'');
+  detailTimeline.innerHTML='';
+  (data.updates||[]).forEach(u=>{
+   const li=document.createElement('li');
+   li.innerHTML=`<p class="text-xs text-navy/40">${fmt(u.created_at)} · ${esc(u.created_by||'')}</p>
+    <p class="text-sm">${esc(u.note||'')}</p>`;
+   detailTimeline.appendChild(li);
+  });
+ }catch(e){detailTimeline.innerHTML='<li class="text-red-600 text-sm">'+esc(e.message)+'</li>'}
+}
+function closeDetail(){detailOverlay.classList.add('hidden');detailPanel.classList.add('translate-x-full')}
+
+updateForm.onsubmit=async e=>{
+ e.preventDefault();updError.classList.add('hidden');
+ try{
+  const res=await fetch('/api/admin/update',{method:'POST',
+   headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
+   body:JSON.stringify({reference:updRef.value,status:updStatus.value,assigned_to:updAssignee.value,note:updNote.value.trim()})});
+  const data=await res.json();
+  if(!res.ok)throw new Error(data.error||'Update failed');
+  openDetail(updRef.value);loadIncidents();loadDashboard();
+ }catch(ex){updError.textContent=ex.message;updError.classList.remove('hidden')}
+};
+
+async function runExport(){
+ exportMsg.textContent='Preparing…';
+ try{
+  const res=await fetch('/api/admin/incidents?limit=500',{headers:{Authorization:'Bearer '+token}});
+  const data=await res.json();const rows=data.incidents||[];
+  if(!rows.length){exportMsg.textContent='No rows';return}
+  const h=['Reference','Status','Assigned To','Property','Reporter','Contact','Description','Created'];
+  const lines=[h.join(',')];
+  const ce=v=>{const s=String(v??'');return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+  rows.forEach(i=>lines.push([i.reference,i.status,i.assigned_to,i.development_name,i.reporter_name,i.reporter_contact,i.description,i.created_at].map(ce).join(',')));
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/csv'}));
+  a.download='rbs-incidents.csv';a.click();exportMsg.textContent='Downloaded '+rows.length+' rows';
+ }catch(e){exportMsg.textContent=e.message}
+}
+filterQ.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();loadIncidents()}};
+</script>
 </body>
 </html>
