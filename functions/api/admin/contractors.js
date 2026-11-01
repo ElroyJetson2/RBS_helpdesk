@@ -48,8 +48,16 @@ export async function onRequestPost(context) {
     const body = await request.json();
     const business_name = (body.business_name || '').trim();
     const contact_name = (body.contact_name || '').trim();
+    const phone = (body.phone || '').trim();
+    const email = (body.email || '').trim();
     if (!business_name || !contact_name) {
       return json({ error: 'Business name and contact name are required' }, 400);
+    }
+    if (!phone) {
+      return json({ error: 'Phone is required' }, 400);
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return json({ error: 'A valid email is required' }, 400);
     }
 
     const fields = pickFields(body);
