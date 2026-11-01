@@ -43,6 +43,7 @@
 <button onclick="showSection('dashboard')" id="navDashboard" class="px-2.5 py-1.5 rounded text-accent font-medium">Dashboard</button>
 <button onclick="showSection('incidents')" id="navIncidents" class="px-2.5 py-1.5 rounded text-white/70 hover:text-accent">Incidents</button>
 <button onclick="showSection('reports')" id="navReports" class="px-2.5 py-1.5 rounded text-white/70 hover:text-accent">Reports</button>
+<a href="/contractors.html" class="px-2.5 py-1.5 rounded text-white/70 hover:text-accent">Contractors</a>
 <span id="userName" class="text-white/50 text-xs ml-2"></span>
 <span id="roleBadge" class="text-[10px] uppercase px-1.5 py-0.5 rounded bg-white/10"></span>
 <button onclick="logout()" class="text-white/60 text-xs ml-1">Logout</button>
@@ -268,23 +269,19 @@ async function openDetail(ref){
       photoBox.classList.remove('hidden');
       photos.forEach(p=>{
         const img=document.createElement('img');
-        img.src=p.data_url;
-        img.alt='Photo';
+        img.src=p.data_url;img.alt='Photo';
         img.className='w-20 h-20 object-cover rounded-lg border border-navy/10 cursor-pointer';
         img.onclick=()=>window.open(p.data_url,'_blank');
         photoGrid.appendChild(img);
       });
-    } else {
-      photoBox.classList.add('hidden');
-    }
+    } else photoBox.classList.add('hidden');
   }
   updStatus.value=i.status||'open';
   fillAssignees(c.assigned_to||i.assigned_to||'');
   detailTimeline.innerHTML='';
   (data.updates||[]).forEach(u=>{
    const li=document.createElement('li');
-   li.innerHTML=`<p class="text-xs text-navy/40">${fmt(u.created_at)} · ${esc(u.created_by||'')}</p>
-    <p class="text-sm">${esc(u.note||'')}</p>`;
+   li.innerHTML=`<p class="text-xs text-navy/40">${fmt(u.created_at)} · ${esc(u.created_by||'')}</p><p class="text-sm">${esc(u.note||'')}</p>`;
    detailTimeline.appendChild(li);
   });
  }catch(e){detailTimeline.innerHTML='<li class="text-red-600 text-sm">'+esc(e.message)+'</li>'}
