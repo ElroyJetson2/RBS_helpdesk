@@ -69,11 +69,37 @@ export async function onRequestGet(context) {
       'SELECT id, name, code FROM developments ORDER BY name'
     ).all();
 
-    const assignees = await env.DB.prepare(
-      `SELECT id, username, display_name, email, role FROM staff
-       WHERE role = 'contractor' OR role = 'admin'
-       ORDER BY display_name`
-    ).all();
+    // All staff can appear in Assigned To (admins + contractors + anyone)
+    let assigneeRows = [];
+    try {
+      const assignees = await env.DB.prepare(
+        `SELECT id, username, display_name, email, role FROM staff ORDER BY display_name, username`
+      ).all();
+      assigneeRows = assignees.results || [];
+    } catch (e) {
+      // role/email columns may be missing
+      try {
+        const assignees = await env.DB.prepare(
+          `SELECT id, username, display_name FROM staff ORDER BY display_name, username`
+        ).all();
+        assigneeRows = (assignees.results || []).map((a) => ({ ...a, role: 'admin', email: null }));
+      } catch (e2) {
+        assigneeRows = [];
+      }
+    }
+
+    // Ensure defaults are always available even if not yet in staff table
+    const defaults = [
+      { username: 'captain', display_name: 'Captain', role: 'contractor' },
+      { username: 'cameron', display_name: 'Cameron', role: 'contractor' },
+      { username: 'stevew', display_name: 'Steve W', role: 'admin' }
+    ];
+    const names = new Set(assigneeRows.map((a) => (a.display_name || a.username || '').toLowerCase()));
+    for (const d of defaults) {
+      if (!names.has(d.display_name.toLowerCase()) && !names.has(d.username.toLowerCase())) {
+        assigneeRows.push(d);
+      }
+    }
 
     let stats = null;
     if (includeStats) {
@@ -104,12 +130,12 @@ export async function onRequestGet(context) {
       success: true,
       incidents: result.results || [],
       developments: developments.results || [],
-      assignees: (assignees.results || []).map(a => ({
-        id: a.id,
+      assignees: assigneeRows.map((a) => ({
+        id: a.id || null,
         username: a.username,
         display_name: a.display_name || a.username,
-        email: a.email,
-        role: a.role
+        email: a.email || null,
+        role: a.role || 'admin'
       })),
       stats,
       role: staff.role,
