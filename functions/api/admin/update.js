@@ -1,4 +1,3 @@
-import { notifyStatusChange, notifyAssignment } from '../../lib/email.js';
 import { json, getStaffFromRequest, VALID_STATUSES, statusLabel } from '../../lib/auth.js';
 
 export async function onRequestPost(context) {
@@ -61,33 +60,22 @@ export async function onRequestPost(context) {
       `INSERT INTO updates (incident_id, status, note, created_by) VALUES (?, ?, ?, ?)`
     ).bind(incident.id, newStatus, updateNote, staff.display_name || staff.username).run();
 
-    const updated = Object.assign({}, incident, { status: newStatus, assigned_to: newAssigned });
-
-    // Prefer waitUntil when available; otherwise await so emails still send
-    const runBg = (p) => {
-      try {
-        if (typeof context.waitUntil === 'function') {
-          context.waitUntil(p);
-        } else {
-          return p;
-        }
-      } catch (e) {
-        return p;
+    // Emails: load module dynamically and never fail the update if mail breaks
+    try {
+      const email = await import('../../lib/email.js');
+      const updated = Object.assign({}, incident, { status: newStatus, assigned_to: newAssigned });
+      if (statusChanged || note) {
+        await email.notifyStatusChange(env, updated, updateNote).catch(function (e) {
+          console.error('notifyStatusChange', e);
+        });
       }
-      return null;
-    };
-
-    const pending = [];
-    if (statusChanged || note) {
-      const r = runBg(notifyStatusChange(env, updated, updateNote));
-      if (r) pending.push(r);
-    }
-    if (assignmentChanged && newAssigned) {
-      const r = runBg(notifyAssignment(env, updated, newAssigned));
-      if (r) pending.push(r);
-    }
-    if (pending.length) {
-      await Promise.allSettled(pending);
+      if (assignmentChanged && newAssigned) {
+        await email.notifyAssignment(env, updated, newAssigned).catch(function (e) {
+          console.error('notifyAssignment', e);
+        });
+      }
+    } catch (mailErr) {
+      console.error('email module', mailErr);
     }
 
     return json({ success: true, status: newStatus, assigned_to: newAssigned });
@@ -98,8 +86,6 @@ export async function onRequestPost(context) {
 }
 
 export async function onRequest(context) {
-  if (context.request.method === 'POST') {
-    return onRequestPost(context);
-  }
+  if (context.request.method === 'POST') return onRequestPost(context);
   return json({ error: 'Method not allowed' }, 405);
 }
