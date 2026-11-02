@@ -52,8 +52,8 @@ export async function onRequestPost(context) {
     let updateNote = note;
     if (!updateNote) {
       const parts = [];
-      if (statusChanged) parts.push(`Status changed to ${statusLabel(newStatus)}`);
-      if (assignmentChanged) parts.push(newAssigned ? `Assigned to ${newAssigned}` : 'Unassigned');
+      if (statusChanged) parts.push('Status changed to ' + statusLabel(newStatus));
+      if (assignmentChanged) parts.push(newAssigned ? 'Assigned to ' + newAssigned : 'Unassigned');
       updateNote = parts.join('. ') || 'Update added';
     }
 
@@ -61,28 +61,45 @@ export async function onRequestPost(context) {
       `INSERT INTO updates (incident_id, status, note, created_by) VALUES (?, ?, ?, ?)`
     ).bind(incident.id, newStatus, updateNote, staff.display_name || staff.username).run();
 
-    const updated = { ...incident, status: newStatus, assigned_to: newAssigned };
+    const updated = Object.assign({}, incident, { status: newStatus, assigned_to: newAssigned });
 
+    // Prefer waitUntil when available; otherwise await so emails still send
+    const runBg = (p) => {
+      try {
+        if (typeof context.waitUntil === 'function') {
+          context.waitUntil(p);
+        } else {
+          return p;
+        }
+      } catch (e) {
+        return p;
+      }
+      return null;
+    };
+
+    const pending = [];
     if (statusChanged || note) {
-      context.waitUntil(notifyStatusChange(env, updated, updateNote));
+      const r = runBg(notifyStatusChange(env, updated, updateNote));
+      if (r) pending.push(r);
     }
     if (assignmentChanged && newAssigned) {
-      context.waitUntil(notifyAssignment(env, updated, newAssigned));
+      const r = runBg(notifyAssignment(env, updated, newAssigned));
+      if (r) pending.push(r);
+    }
+    if (pending.length) {
+      await Promise.allSettled(pending);
     }
 
     return json({ success: true, status: newStatus, assigned_to: newAssigned });
   } catch (err) {
     console.error('Update failed', err);
-    return json({ error: 'Update failed', details: err.message }, 500);
+    return json({ error: 'Update failed', details: String(err && err.message ? err.message : err) }, 500);
   }
 }
 
 export async function onRequest(context) {
   if (context.request.method === 'POST') {
     return onRequestPost(context);
-  }
-  if (context.request.method === 'OPTIONS') {
-    return new Response(null, { status: 204 });
   }
   return json({ error: 'Method not allowed' }, 405);
 }
